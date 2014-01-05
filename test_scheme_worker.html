@@ -1,15 +1,6 @@
 <html>
 <head>
-  <script src="run_tests.js"></script>
-  <!--
-  <script src="tokenizer.js"></script>
-  
-  <script src="reader.js"></script>
-  
-  <script src="scheme_worker.js"></script>
-  
-
-  -->
+  <script src="test_harness.js"></script>
 </head>
 <body>
 
@@ -36,7 +27,7 @@
 <script>
   var w = new Worker("scheme_worker.js");
   var output = document.getElementById("output");
-  
+
   w.onmessage = function(e) {
     if (e.data.type === "end") {
       return;
