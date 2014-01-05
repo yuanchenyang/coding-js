@@ -847,7 +847,7 @@ one-through-four
 ; display test
 (define (add n result)
   (if (= n 0)
-      (begin (display 'answer:) (display result))
+      (begin (display "answer:") (display result))
       (begin (if (= (modulo n 200) 0)
                  (print n)
                  #t)
@@ -963,4 +963,4 @@ s
 ; expect everything
 
 (substring "sliced" 1 5)
-;expect lice
+; expect lice

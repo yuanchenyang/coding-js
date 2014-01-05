@@ -1,7 +1,7 @@
 // Logic Worker //
 
 
-importScripts("reader.js", "tokenizer.js");
+importScripts("reader.js", "tokenizer.js", "primitives.js");
 
 onmessage = function(event) {
     var env = create_global_frame();
@@ -163,20 +163,24 @@ function logic_eval(expr, env) {
         var result_str = [];
         for (var i = 0; i < results.length; i++) {
             if (! success) {
-                scheme_return("Success!");
+                logic_return("Success!");
             }
             success = true;
 
             var items = [];
             results[i].forEach(function (e) {
-                items.push(e[0].toString() + ": " + e[1].toString());
+                items.push(e[0].toString().slice(1) + ": " + e[1].toString());
             });
-            result_str.push(items.join("\t"));
+            if (items.length > 0) {
+                result_str.push(items.join("\t"));
+            }
         }
-        scheme_print(result_str.join("\n"));
+        console.log(result_str);
+        if (result_str.length > 0) {
+            logic_print(result_str.join("\n"));
+        }
         if (! success) {
-            scheme_return("Failed.");
-            scheme_print("");
+            logic_return("Failed.");
         }
     } else {
         throw "Error: Please provide a fact or query: "+ expr.toString();
@@ -241,71 +245,16 @@ function create_global_frame() {
 }
 
 
-////////////////
-// Primitives //
-////////////////
-
-function scheme_listp(x) {
-    // Return whether x is a well-formed list. Assumes no cycles
-    while (x !== nil) {
-        if (!(x instanceof Pair)) {
-            return false;
-        }
-        x = x.second;
-    }
-    return true;
-}
-
-function scheme_symbolp(x) {
-    return typeof x === "string";
-}
-
-
-function scheme_numberp(x) {
-    return typeof x === "number";
-}
-
-function scheme_booleanp(x) {
-    return (x === true) || (x === false);
-}
-
-function scheme_nullp(x) {
-    return x === nil;
-}
-
-function scheme_pairp(x) {
-    return x instanceof Pair;
-}
-
-function scheme_atomp(x) {
-    return scheme_booleanp(x) || scheme_numberp(x) || scheme_symbolp(x) ||
-           scheme_nullp(x);
-}
-
-
-function scheme_return(val) {
+function logic_return(val) {
     this.postMessage({'type': "return_value", 'value': val.toString()});
 }
 
 
-function scheme_print(val) {
+function logic_print(val) {
     this.postMessage({'type': "displayed_text", 'value': val.toString() + "\n"});
 }
 
 
-function scheme_newline() {
+function logic_newline() {
     this.postMessage({'type': "displayed_text", 'value': "\n"});
-}
-
-
-function scheme_error(msg) {
-    if (msg === undefined) {
-        throw "SchemeError";
-    } else {
-        throw "SchemeError: " + msg;
-    }
-}
-
-function scheme_exit() {
-    throw "EOFError";
 }

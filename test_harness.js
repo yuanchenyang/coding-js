@@ -1,35 +1,70 @@
+var w;
+var worker_name;
+
+function create_worker() {
+    var w = new Worker(worker_name);
+    w.onmessage = on_worker_message;
+    return w;
+}
+
+function switch_scheme() {
+    worker_name = "scheme_worker.js";
+    $("#testfile").val("tests.scm");
+    $("#switch-button")
+        .val("Switch to Logic")
+        .click(switch_logic);
+}
+
+function switch_logic() {
+    worker_name = "logic_worker.js";
+    $("#testfile").val("tests.logic");
+    $("#switch-button")
+        .val("Switch to Scheme")
+        .click(switch_scheme);
+}
+
+function test_file(filename, output) {
+    // Load test cases from specified file
+    $.get(filename, function (data) {
+        test(data, output);
+    });
+}
+
 function test(test_specs, output) {
     // Runs the test code in a single global environment.
+
     var test_cases = split_cases(test_specs);
-    var worker = new Worker("scheme_worker.js");
+    var worker = create_worker();
     var eval_result = "";
     var code = "";
 
     output.value += "Running Tests...\n";
-    
+
     worker.onmessage = function(e) {
         if (e.data.type === "end") {
+            console.log(eval_result);
             check_tests(test_cases, eval_result, output);
             worker.terminate();
             return;
         } else if (e.data.type === "return_value") {
+            console.log("return: " + '"' + e.data.value + '"');
             eval_result += e.data.value + "\n";
         } else if (e.data.type === "displayed_text") {
+            console.log("display: " + '"' + e.data.value + '"');
             eval_result += e.data.value;
         } else if (e.data.type === "error") {
             eval_result += e.data.value + "\n";
         }
     };
-    
+
     for (var i = 0; i < test_cases.length; i++) {
         code += test_cases[i][0];
     }
-    
+
     worker.postMessage(code);
 }
 
 function check_tests(test_cases, eval_result, out) {
-    console.log("hi");
     var code, result, curr_result, result_num_lines;
     var failed = 0;
     var total = test_cases.length;
@@ -41,7 +76,7 @@ function check_tests(test_cases, eval_result, out) {
         result_num_lines = result.split("\n").length - 1;
         curr_result = eval_lines.slice(0, result_num_lines).join("\n") + "\n";
         if ( curr_result !== result) {
-            out.value +=  "\n################\n\nFAILED TEST:" + code + 
+            out.value +=  "\n################\n\nFAILED TEST:" + code +
                 "\nEXPECTED:\n" + result + "\n\GOT:\n" + curr_result;
             failed += 1;
         }
@@ -56,13 +91,13 @@ function split_cases(code) {
     // Takes in a chunk of code and returns an array containing test cases.
     // Each test case is an array, with its first entry the code to run, and the
     // second entry is the result to compare with.
-    
+
     var lines = code.split("\n");
     var code_b = "";
     var result_b = "";
     var reading_result = false;
     var test_cases = [];
-    
+
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var result_line = (line.slice(0, 9) === "; expect ");
@@ -73,7 +108,7 @@ function split_cases(code) {
             code_b = "";
             result_b = "";
         }
-        
+
         if (result_line) {
             result_b += line.slice(9) + "\n";
             reading_result = true;
@@ -88,3 +123,36 @@ function split_cases(code) {
 
     return test_cases;
 }
+
+function on_worker_message(e) {
+    if (e.data.type === "end") {
+        return;
+    } else if (e.data.type === "return_value") {
+        output.value += e.data.value + "\n";
+    } else if (e.data.type === "displayed_text") {
+        output.value += e.data.value;
+    } else if (e.data.type === "error") {
+        output.value += e.data.value + "\n";
+    } else {
+        output.value += e.data.value + "\n";
+    }
+};
+
+$(function() {
+    var output = document.getElementById("output");
+    $.ajaxSetup({ cache: false });
+
+    $("#eval-button").click(function() {
+        w = create_worker();
+        output.value = '';
+        w.postMessage(this.form.input.value);
+    });
+    $("#test-button").click(function() {
+        output.value = '';
+        test_file(this.form.testfile.value, output);
+    });
+    $("#clear-button").click(function() {
+        this.form.input.value = '';
+    });
+    switch_scheme();
+});

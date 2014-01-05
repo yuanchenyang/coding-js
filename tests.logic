@@ -1,0 +1,140 @@
+;;; Question 1
+
+(fact (add-to-all ?a () ()))
+(fact (add-to-all ?a (?x . ?r) ((?a . ?x) . ?s))
+      (add-to-all ?a ?r ?s))
+
+(query (add-to-all a ((b) (c d)) ((a b) (a c d))))
+; expect Success!
+(query (add-to-all a ((b c) (b) (foo)) ?what))
+; expect Success!
+; expect what: ((a b c) (a b) (a foo))
+(query (add-to-all ?what ((c) (d e) ()) ((b c) (b d e) (b))))
+; expect Success!
+; expect what: b
+(query (add-to-all ?what ?list ((b c) (d e) (b))))
+; expect Failed.
+
+
+;;; Question 2
+
+(fact (append () ?a ?a))
+(fact (append (?x . ?r) ?b (?x . ?c))
+      (append ?r ?b ?c))
+
+(fact (sublists () (())))
+(fact (sublists (?x . ?r) ?y)
+      (sublists ?r ?z)
+      (add-to-all ?x ?z ?a)
+      (append ?z ?a ?y))
+
+(query (sublists (1 2 3) ?subs))
+; expect Success!
+; expect subs: (() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))
+
+
+;;; Question 3
+
+(fact (fruits apple banana cherry date elderberry fig guava))
+
+(fact (fruits-tail . ?fruits) (fruits . ?fruits))
+(fact (fruits-tail . ?fruits) (fruits-tail ?first . ?fruits))
+
+(query (fruits-tail date elderberry fig guava))
+; expect Success!
+(query (fruits-tail banana . ?after-banana))
+; expect Success!
+; expect after-banana: (cherry date elderberry fig guava)
+(query (fruits-tail ?e fig guava))
+; expect Success!
+; expect e: elderberry
+
+
+;;; Question 4
+
+(fact (prefix () ?s))
+(fact (prefix (?first . ?p) (?first . ?s))
+      (prefix ?p ?s))
+
+(fact (ends-before ?fruit (?last)) (fruits-tail ?last ?fruit . ?tail))
+(fact (ends-before ?fruit (?first ?second . ?rest))
+      (ends-before ?fruit (       ?second . ?rest))
+      (fruits-tail ?first ?second . ?tail))
+
+(fact (fruit-range ?before ?after ?between)
+      (ends-before ?after ?between)
+      (fruits-tail ?before . ?tail)
+      (prefix ?between ?tail))
+
+(query (fruit-range cherry guava (date elderberry fig)))
+; expect Success!
+(query (fruit-range cherry elderberry date))
+; expect Failed.
+(query (fruit-range cherry elderberry ?between))
+; expect Success!
+; expect between: (date)
+(query (fruit-range cherry date ()))
+; expect Failed.
+(query (fruit-range banana fig ?between))
+; expect Success!
+; expect between: (cherry date elderberry)
+
+
+;;; Question 5
+
+(fact (increment 1 2))
+(fact (increment 2 3))
+(fact (increment 3 4))
+(fact (increment 4 5))
+(fact (increment 5 6))
+(fact (increment 6 7))
+(fact (increment 7 8))
+(fact (increment 8 9))
+
+(fact (add       1 ?x ?x+1)
+      (increment ?x ?x+1))
+(fact (add       ?x+1 ?y ?z+1)
+      (increment ?x ?x+1)
+      (increment ?z ?z+1)
+      (add       ?x ?y ?z))
+
+(fact (max ?a ?a ?a))
+(fact (max ?a ?b ?b)
+      (add ?a ?c ?b))
+(fact (max ?a ?b ?a)
+      (add ?b ?c ?a))
+
+(query (max 2 4 4) (max 4 2 4) (max 4 4 4))
+; expect Success!
+(query (max 3 ?x ?x) (max ?x 5 5))
+; expect Success!
+; expect x: 3
+; expect x: 4
+; expect x: 5
+(query (max 1 2 3))
+; expect Failed.
+
+
+;;; Question 6
+
+(fact (reduce-to ?value ?fn ?a ?b)
+      (?fn ?a ?b ?value))
+(fact (reduce-to ?value ?fn ?a . ?rest)
+      (?fn ?a ?imm ?value)
+      (reduce-to ?imm ?fn . ?rest))
+
+(query (reduce-to ?value add 1 1 2 3))
+; expect Success!
+; expect value: 7
+(query (reduce-to ?value max 1 2 4 1 3 1))
+; expect Success!
+; expect value: 4
+(query (reduce-to 4 add . ?addends))
+; expect Success!
+; expect addends: (1 3)
+; expect addends: (2 2)
+; expect addends: (3 1)
+; expect addends: (1 1 2)
+; expect addends: (1 2 1)
+; expect addends: (1 1 1 1)
+; expect addends: (2 1 1)

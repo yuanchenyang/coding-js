@@ -1,0 +1,39 @@
+<html>
+<head>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script src="test_harness.js"></script>
+  <style type="text/css">
+    textarea {
+       font-size: 10pt;
+       font-family: "Courier New";
+       width: 100%;
+    }
+    td {
+       width: 50%;
+    }
+  </style>
+</head>
+<body>
+
+<table border="0" style="width: 100%;">
+  <tr>
+    <td style="width: 50%;">
+      <form >
+        <textarea id="input" name="input" rows=30></textarea>
+        <br>
+        <textarea id="testfile" name="testfile" rows=1></textarea>
+        <br>
+        <input type="button" value="Evaluate"  id="eval-button">
+        <input type="button" value="Run Tests" id="test-button">
+        <input type="button" value="Clear"     id="clear-button">
+        <input type="button" value="Switch"    id="switch-button">
+      </form>
+    </td>
+    <td>
+      <textarea id="output" rows=30 readOnly=true></textarea>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
