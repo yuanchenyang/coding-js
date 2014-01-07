@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 
-<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="css/isicp.css" />
 
 <script src="helper.js"></script>
 <script src="codemirror/lib/codemirror.js"></script>
@@ -98,8 +99,8 @@ editorOf["scheme-number"].setOption('onBlur', function() {
 <div id="scheme-plus-multiple">
 (+ 21 35 12 7)
 </div>
-<script> 
-prompt("scheme-plus-multiple"); 
+<script>
+prompt("scheme-plus-multiple");
 </script>
 
 <p>
@@ -133,7 +134,7 @@ prompt("scheme-long-tree");
 
 <p> which the interpreter would readily evaluate to be <tt>57</tt>. We can help ourselves by writing such an expression in the form
 
-<script> 
+<script>
 
 var todo = Object.keys(editorOf);
 
@@ -146,7 +147,7 @@ var todo = Object.keys(editorOf);
     editorOf[first].getOption("onBlur")().then(proc);
   } catch (err) {
     proc();
-  }    
+  }
 })();
 
 

@@ -1,0 +1,224 @@
+body {
+  margin-top: 1em;
+  margin-left: 3em;
+}
+
+/*english text, meant for reading*/
+p, table, label, h1, h2, h3, h4, a {
+  font-family:Georgia;
+  color:#2E2E2E;
+  line-height:1.5em;
+  text-align: justify;
+}
+
+h1, h2, h3, h4 {
+  margin-top: 1.5em;
+  color: #444;
+}
+
+h2 {
+  margin-top: 2em;
+}
+
+tt {
+  border: 1px #999999 solid;
+  padding-left:1px;
+  padding-right:1px;
+  background-color: rgba(0,0,0,0.05);
+}
+
+li {
+  font-family:Georgia;
+  color:#2E2E2E;
+}
+
+.figure {
+  text-align: center;
+}
+
+.figure p {
+  text-align: center;
+}
+
+.output_displayed_text {
+  color: blue;
+}
+
+.output_error {
+  color: red;
+}
+
+.p-link {
+  text-decoration: underline;
+  text-align: right;
+}
+
+.p-link:hover {
+  cursor:pointer;
+}
+
+/*Suppress line break when beginning exercise*/
+.exercise p:first-child {
+  margin-top:0;
+}
+
+.output {
+  font-family: monospace;
+  font-style: italic;
+  padding: 0pt 4pt;
+  color: #444;
+}
+
+.exercise {
+  background-color: #D8E5E8;
+  padding: 1.5em;
+}
+
+/*ticks and crosses*/
+
+.wrong-answer {
+  margin-top: -1.5em;
+  font-family: bold;
+  color: red;
+  float:right;
+}
+
+.right-answer {
+  margin-top: -1.5em;
+  font-family: bold;
+  color: green;
+  float:right;
+}
+
+.submit-ans {
+  margin-top: 0em;
+}
+
+/*the tab that comes out on click*/
+
+#sidebox {
+  position:fixed;
+  right:-30%;
+  top:10px;
+  width:35%;
+  height:100%;
+}
+
+#sidebox .content {
+  background:#bada55;
+}
+
+#sidebox .content {
+  float:right;
+  width:92%;
+  height:100%;
+}
+
+#sidebox .tab {
+  background:#bada55;
+  cursor:pointer;
+  float:left;
+  width:8%;
+  height:100%;
+}
+
+#sidebox .navlink {
+  text-decoration: none;
+  font-size: 2em;
+  margin:0.1em;
+}
+
+#sidebox .navlink:hover {
+  cursor: pointer;
+}
+
+#main {
+  width: 60%;
+  float: left;
+  margin-bottom: 3em;
+}
+
+/*autoscroll*/
+.CodeMirror-scroll {
+  height: auto;
+  width: auto;
+  overflow-y: hidden;
+  overflow-x: auto;
+}
+
+/*identifying editable portions*/
+
+.CodeMirror-scroll:hover:not(.static):not(.CodeMirror-focused) {
+  background: rgba(0,0,0,0.05);
+}
+
+.CodeMirror-scroll:hover.static:not(.CodeMirror-focused) {
+  background-color: rgba(0,0,0,0.01);
+}
+
+.CodeMirror-focused:not(:hover) {
+  background: rgba(0,0,0,0.07);
+}
+
+.CodeMirror-focused:hover {
+  background: rgba(0,0,0,0.075);
+}
+
+/**/
+
+.exercise .CodeMirror-scroll:hover:not(.static):not(.CodeMirror-focused) {
+  background: rgba(38, 92, 115, 0.05);
+}
+
+.exercise .CodeMirror-scroll:hover.static:not(.CodeMirror-focused) {
+  background-color: rgba(38, 92, 115, 0.01);
+}
+
+.exercise .CodeMirror-focused:not(:hover) {
+  background: rgba(38, 92, 115, 0.07);
+}
+
+.exercise .CodeMirror-focused:hover {
+  background: rgba(38, 92, 115, 0.075);
+}
+
+/**/
+
+.CodeMirror-matchingbracket {
+  background: rgba(0,0,0,0.1);
+}
+
+/**/
+
+div.CodeMirror span.CodeMirror-matchingbracket {
+    color: #5f5f5f; /*#869CEB; /*why can't we use .CodeMirror-matchingbracket? */
+}
+
+#toc .h3 { 
+  font-size:14px;
+}
+#toc .h4, .div{ 
+  margin-left: 2em;
+  font-size:12px;
+}
+
+label { /*thx cousera*/
+  padding-bottom:5px;
+  float: none;
+  margin-left: 5px;
+  display: inline-block;
+  vertical-align: middle;
+  text-align: left;
+  width: auto;
+  max-width: 95%;
+}
+
+img.center {
+  display:block; 
+  margin-left:auto; 
+  margin-right:auto;
+}
+
+.CodeMirror {
+  line-height: 1.3em;
+}
