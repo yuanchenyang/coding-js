@@ -965,3 +965,12 @@ s
 
 (substring "sliced" 1 5)
 ; expect lice
+
+;; Escaped strings
+(print "\\\n\"")
+; expect \
+; expect "
+
+;; Ignoring other backslashes ( only \" \\ \n and \t are supported)
+(print "\a\b\c\d")
+; expect abcd

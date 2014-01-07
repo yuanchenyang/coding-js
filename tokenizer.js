@@ -35,7 +35,7 @@ SchemeString.prototype = {
             throw "SchemeError: index " + k + " out of range";
         }
         return this.str[k];
-    }    
+    }
 };
 
 
@@ -84,17 +84,35 @@ function next_candidate_token(line, k) {
         } else if (c === '\"') {
             // Returns a representation of a string with a '"' charcter at the
             // start
-            var end = k;
-            var string = "";
+            var end = k + 1;
+            var string = '"';
             while (end < line.length) {
-                string += line[end];
-                end += 1;                
                 if (line[end] === '\"') {
                     break;
                 } else if (line[end] === ESCAPE) {
                     end += 1;
+                    switch (line[end]) {
+                    case '"':
+                        string += '"';
+                        break;
+                    case '\\':
+                        string += '\\';
+                        break;
+                    case 'n':
+                        string += '\n';
+                        break;
+                    case 't':
+                        string += '\t';
+                        break;
+                    default:
+                        // Otherwise just ignore the backslash
+                        string += line[end];
+                    }
+                } else {
+                    string += line[end];
                 }
-            }            
+                end += 1;
+            }
             return [string, end + 1];
         } else {
             var j = k;
