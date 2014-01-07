@@ -8,16 +8,16 @@ function create_worker() {
 }
 
 function switch_scheme() {
-    worker_name = "workers/scheme.js";
-    $("#testfile").val("tests.scm");
+    worker_name = "scheme/scheme_worker.js";
+    $("#testfile").val("scheme/tests.scm");
     $("#switch-button")
         .val("Switch to Logic")
         .click(switch_logic);
 }
 
 function switch_logic() {
-    worker_name = "workers/logic.js";
-    $("#testfile").val("tests.logic");
+    worker_name = "logic/logic_worker.js";
+    $("#testfile").val("logic/tests.logic");
     $("#switch-button")
         .val("Switch to Scheme")
         .click(switch_scheme);
