@@ -175,11 +175,12 @@ function compute(s) {
       def.resolve();
       return;
     } else if (e.data.type === "displayed_text") {
-      output_fragment.push($("<span class='output_displayed_text'>" + e.data.value.replace(/\n/, "<br>") + "</span>"));
+      output_fragment.push($("<span class='output_displayed_text'>" + e.data.value.replace(/\n/g, "<br>") + "</span>"));
     } else if (e.data.type === "return_value") {
       output_fragment.push($("<span class='output_return_value'>" + e.data.value + "<br> </span>"));
     } else if (e.data.type === "error") {
-      output_fragment.push($("<span class='output_error'>" + e.data.value + "<br> </span>"));
+      console.log(e.data);
+      output_fragment.push($("<span class='output_error'>" + e.data.value.replace(/\n/g, "<br>") + "</span>"));
     } else {
       output_fragment.push($("<span>" + e.data + "<br> </span>"));
     }
