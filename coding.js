@@ -159,7 +159,7 @@ function compute(s) {
   var _output = s + "-output";
   var output_fragment = [];
 
-  var w = new Worker("js/interpreter/scheme_worker.js");
+  var w = new Worker("web-worker-interpreter/workers/scheme.js");
   w.onmessage = function(e) {
     if (e.data.type === "end") {
       if (output_fragment.length == 0) {

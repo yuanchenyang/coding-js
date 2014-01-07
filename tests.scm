@@ -6,8 +6,9 @@
 ;;; "; expect ". There can be multiple "expect" lines, to test code that output
 ;;; multiple lines.
 ;;;
-;;; Copy and Paste these tests into the textarea in test_scheme_worker.html,
-;;; and hit Run Tests to start.
+;;; Run in a terminal:
+;;;  ./run_tests
+;;; and hit Run Tests in the browser window to start.
 ;;;
 ;;; If a test outputs more lines than what is expected, all the tests after that
 ;;; one would fail.

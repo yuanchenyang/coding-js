@@ -1,7 +1,7 @@
 // Logic Worker //
 
 
-importScripts("reader.js", "tokenizer.js", "primitives.js");
+importScripts("../reader.js", "../tokenizer.js", "../primitives.js");
 
 onmessage = function(event) {
     var env = create_global_frame();
@@ -175,7 +175,6 @@ function logic_eval(expr, env) {
                 result_str.push(items.join("\t"));
             }
         }
-        console.log(result_str);
         if (result_str.length > 0) {
             logic_print(result_str.join("\n"));
         }

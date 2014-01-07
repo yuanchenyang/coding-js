@@ -8,7 +8,7 @@ function create_worker() {
 }
 
 function switch_scheme() {
-    worker_name = "scheme_worker.js";
+    worker_name = "workers/scheme.js";
     $("#testfile").val("tests.scm");
     $("#switch-button")
         .val("Switch to Logic")
@@ -16,7 +16,7 @@ function switch_scheme() {
 }
 
 function switch_logic() {
-    worker_name = "logic_worker.js";
+    worker_name = "workers/logic.js";
     $("#testfile").val("tests.logic");
     $("#switch-button")
         .val("Switch to Scheme")
@@ -42,15 +42,12 @@ function test(test_specs, output) {
 
     worker.onmessage = function(e) {
         if (e.data.type === "end") {
-            console.log(eval_result);
             check_tests(test_cases, eval_result, output);
             worker.terminate();
             return;
         } else if (e.data.type === "return_value") {
-            console.log("return: " + '"' + e.data.value + '"');
             eval_result += e.data.value + "\n";
         } else if (e.data.type === "displayed_text") {
-            console.log("display: " + '"' + e.data.value + '"');
             eval_result += e.data.value;
         } else if (e.data.type === "error") {
             eval_result += e.data.value + "\n";
