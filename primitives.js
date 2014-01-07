@@ -167,7 +167,7 @@ function _check_nums(vals) {
     // Check that all elements in array VALS are numbers
     for (var i = 0; i < vals.length; i++) {
         if (! scheme_numberp(vals[i])) {
-            throw "SchemeError: operand '"+ vals[i] +"' is not a number";
+            throw "SchemeError: operand '"+ vals[i].toString() +"' is not a number";
         }
     }
 }

@@ -18,6 +18,8 @@ onmessage = function(event) {
 
     var codebuffer = new Buffer(tokenize_lines(event.data.split("\n")));
 
+    var evalstack = [];
+
     while (codebuffer.current() != null) {
         try {
             var result = scheme_eval(scheme_read(codebuffer), env);
@@ -25,10 +27,16 @@ onmessage = function(event) {
                 this.postMessage({'type': 'return_value', 'value': result.toString()});
             }
         } catch(e) {
-            this.postMessage({'type': 'error', 'value': e.toString()});
+            var estring = e.toString() + '\n\nCurrent Eval Stack:\n'+
+                '-------------------------\n';
+            env.stack.reverse();
+            env.stack.forEach(function (e, i) {
+                estring += i.toString() + ":\t" + e.toString() + "\n";
+            });
+            this.postMessage({'type': 'error', 'value': estring});
         }
     }
-    this.postMessage({"type": "end"});
+    this.postMessage({'type': 'end'});
 };
 
 
@@ -47,6 +55,10 @@ onmessage = function(event) {
 function Frame(parent) {
     this.bindings = {};
     this.parent = parent;
+    // All child frames' stacks point to the stack of the global parent frame
+    if (parent != null) {
+        this.stack = parent.stack;
+    }
 }
 Frame.prototype = {
     lookup : function(symbol) {
@@ -146,15 +158,17 @@ LambdaProcedure.prototype = {
 function scheme_eval(expr, env) {
     // Evaluate Scheme expression EXPR in environment ENV
     // This version of scheme_eval supports tail-call optimization
+    env.stack.push(expr);
+    var result;
     while (true) {
         if (expr === null) {
             throw 'SchemeError: Cannot evaluate an undefined expression.';
         }
         // Evaluate Atoms
         if (scheme_symbolp(expr)) {
-            return env.lookup(expr);
+            result = env.lookup(expr); break;
         } else if (scheme_atomp(expr)) {
-            return expr;
+            result = expr; break;
         }
         if (! scheme_listp(expr)) {
             throw "SchemeError: malformed list: " + expr.toString();
@@ -165,34 +179,37 @@ function scheme_eval(expr, env) {
         if (first in LOGIC_FORMS) {
             expr = LOGIC_FORMS[first](rest, env);
         } else if (first === 'lambda') {
-            return do_lambda_form(rest, env);
+            result = do_lambda_form(rest, env); break;
         } else if (first === 'set!') {
-            return do_sete_form(rest, env);
+            result = do_sete_form(rest, env); break;
         } else if (first === 'set-car!') {
-            return do_set_care_form(rest, env);
+            result = do_set_care_form(rest, env); break;
         } else if (first === 'set-cdr!') {
-            return do_set_cdre_form(rest, env);
+            result = do_set_cdre_form(rest, env); break;
         } else if (first === 'define') {
-            return do_define_form(rest, env);
+            result = do_define_form(rest, env); break;
         } else if (first === 'quote') {
-            return do_quote_form(rest);
+            result = do_quote_form(rest); break;
         } else if (first === 'let') {
             var l = do_let_form(rest, env);
             expr = l[0];
             env = l[1];
         } else {
             var procedure = scheme_eval(first, env);
-            var args = rest.map(function(operand)
-                                {return scheme_eval(operand, env);});
+            var args = rest.map(function(operand) {
+                return scheme_eval(operand, env);
+            });
             if (procedure instanceof LambdaProcedure) {
                 env = procedure.env.make_call_frame(procedure.formals, args,
                                                     procedure.dotted);
                 expr = procedure.body;
             } else {
-                return scheme_apply(procedure, args, env);
+                result = scheme_apply(procedure, args, env); break;
             }
         }
     }
+    env.stack.pop();
+    return result;
 }
 
 function scheme_apply(procedure, args, env) {
@@ -447,6 +464,7 @@ function create_global_frame() {
     var env = new Frame(null);
     env.define("eval", new PrimitiveProcedure(scheme_eval, true));
     env.define("apply", new PrimitiveProcedure(scheme_apply, true));
+    env.stack = [];
     add_primitives(env);
     return env;
 }
