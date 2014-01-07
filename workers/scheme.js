@@ -11,7 +11,7 @@
 // Scheme Worker //
 
 
-importScripts("reader.js", "tokenizer.js");
+importScripts("../reader.js", "../tokenizer.js");
 
 onmessage = function(event) {
     var env = create_global_frame();
