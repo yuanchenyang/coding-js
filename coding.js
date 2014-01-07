@@ -1,5 +1,11 @@
 "use strict";
 
+var interpreter_path = "";
+
+function set_interpreter_path(path) {
+  interpreter_path = path;
+}
+
 function focus_callback() {
   //for clients to override
 }
@@ -159,7 +165,7 @@ function compute(s) {
   var _output = s + "-output";
   var output_fragment = [];
 
-  var w = new Worker("scheme/scheme_worker.js");
+  var w = new Worker(interpreter_path + "scheme/scheme_worker.js");
   w.onmessage = function(e) {
     if (e.data.type === "end") {
       if (output_fragment.length == 0) {
