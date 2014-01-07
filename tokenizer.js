@@ -25,7 +25,7 @@ SchemeString.prototype = {
         return 'SchemeString(' + this.str + ')';
     },
     toString : function() {
-        return this.str;
+        return '"' + this.str + '"';
     },
     substring : function(start, end) {
         return this.str.slice(start, end);

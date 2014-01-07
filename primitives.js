@@ -21,6 +21,13 @@ function check_type(val, predicate, k, name) {
     return val;
 }
 
+function scheme_tostring(val) {
+    if (val instanceof SchemeString) {
+        return val.str;
+    }
+    return val.toString();
+}
+
 var _PRIMITIVES = {};
 
 function scheme_booleanp(x) {
@@ -333,7 +340,7 @@ function scheme_string_append() {
     _check_strings(arguments);
     var s = '';
     for (var i = 0; i < arguments.length; i++) {
-        s += arguments[i].toString();
+        s += arguments[i].str;
     }
     return s;
 }
@@ -360,12 +367,13 @@ function scheme_substring(s, start, end) {
 _PRIMITIVES["substring"] = new PrimitiveProcedure(scheme_substring);
 
 function scheme_display(val) {
-    this.postMessage({'type': "displayed_text", 'value': val.toString()});
+    this.postMessage({'type': "displayed_text", 'value': scheme_tostring(val)});
 }
 _PRIMITIVES["display"] = new PrimitiveProcedure(scheme_display);
 
 function scheme_print(val) {
-    this.postMessage({'type': "displayed_text", 'value': val.toString() + "\n"});
+    this.postMessage({'type': "displayed_text",
+                      'value': scheme_tostring(val) + "\n"});
 }
 _PRIMITIVES["print"] = new PrimitiveProcedure(scheme_print);
 

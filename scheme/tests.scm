@@ -543,7 +543,7 @@ one-through-four
 
 ; expect 50
 ; expect 30
-; expect Insufficient funds
+; expect "Insufficient funds"
 ; expect 10
 
 (define (make-account balance)
@@ -569,7 +569,7 @@ one-through-four
 ((acc 'withdraw) 60)
 
 ; expect 50
-; expect Insufficient funds
+; expect "Insufficient funds"
 ; expect 90
 ; expect 30
 
@@ -695,10 +695,6 @@ one-through-four
 (print-and-square 12)
 ; expect 12
 ; expect 144
-
-(/ 1 0)
-; expect SchemeError: division by zero
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Scheme Implementations ;;;
@@ -897,9 +893,6 @@ one-through-four
 (double-minus 4 5)
 ; expect 9
 
-(double-minus 4)
-; expect SchemeError: Invalid number of arguments
-
 ( (lambda a a) 1 . (2) )
 ; expect (1 2)
 
@@ -936,10 +929,20 @@ x
 
 (define s "Hello World!")
 s
-; expect Hello World!
+; expect "Hello World!"
+
+'( 1 "2" "abc")
+; expect (1 "2" "abc")
 
 (string? s)
 ; expect true
+
+(string? 'hi)
+; expect false
+(string? 0)
+; expect false
+(string? '())
+; expect false
 
 (begin (display "Str") (display "") (display "ings!")
        (display " ") (display "They're real!") (newline))
