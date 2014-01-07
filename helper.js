@@ -6,10 +6,6 @@ function isArray(o) {
   return Object.prototype.toString.call(o) === '[object Array]';
 }
 
-function isarray(e) {
-  return (e.length && typeof e !== "string");
-}
-
 function shuffle(myArray) {
   var i = myArray.length;
   if ( i == 0 ) return false;
