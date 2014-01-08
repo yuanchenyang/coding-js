@@ -165,7 +165,7 @@ function compute(s) {
   var _output = s + "-output";
   var output_fragment = [];
 
-  var w = new Worker(interpreter_path + "scheme/scheme_worker.js");
+  var w = new Worker(interpreter_path + "workers/scheme_worker.js");
   w.onmessage = function(e) {
     if (e.data.type === "end") {
       if (output_fragment.length == 0) {
@@ -195,11 +195,11 @@ function compute(s) {
   return def; //for template code to chain
 }
 
-function eval_scheme(code) { //deferred
+function eval_scheme(code) { //TODO: why is this different from compute?
 
   var def = $.Deferred();
 
-  var w = new Worker("scheme/scheme_worker.js");
+  var w = new Worker(interpreter_path + "workers/scheme_worker.js");
   var out = [];
   w.onmessage = function(e) {
     if (e.data.type === "end") {
