@@ -16,7 +16,7 @@ function cleanCode(code) {
 }
 
 function $_(s) {
-  // _ to $ where _ = div id's, $ = jQuery objects; read _ as #, $_ consumes a hash and adds a $
+  // lookup element with an id of 's'
   var ret = $("[id={0}]".format(s).replace(/\?/, "\\\?"));
   if (!ret[0]) {
     throw "#" + s + " did not match anything";
@@ -187,7 +187,8 @@ function compute(s) {
     $_(_output).empty().append(output_fragment);
   };
 
-  w.postMessage(getDependedOnCode(s));
+  w.postMessage({'type': 'set_interpreter_path', 'value': interpreter_path});
+  w.postMessage({'type': 'code', 'value': getDependedOnCode(s)});
 
   for (var pushes = getPushes(s), i = 0; i < pushes.length; i++) {
     compute(pushes[i]);
@@ -195,7 +196,13 @@ function compute(s) {
   return def; //for template code to chain
 }
 
-function eval_scheme(code) { //TODO: why is this different from compute?
+/*
+eval_scheme(code).then(function(res) {
+  check if res is correct
+  update DOM
+});
+*/
+function eval_scheme(code) { 
 
   var def = $.Deferred();
 
@@ -212,7 +219,8 @@ function eval_scheme(code) { //TODO: why is this different from compute?
   };
 
   console.log(code);
-  w.postMessage(code);
+  w.postMessage({'type': 'set_interpreter_path', 'value': interpreter_path});
+  w.postMessage({'type': 'code', 'value': code});
 
   return def;
 }

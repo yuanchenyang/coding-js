@@ -7,9 +7,12 @@ Pure js interpreters for various languages.  Currently includes
 
 ## Features
 
-- Interpreters use web workers so that interpreting does not pause the UI
+- Web Workers used - long-running interpretations don't pause the UI
 - Test suite for each language
 
 # coding.js
 
 Integrates web worker interpreters with codemirror. Make your code fragments interactive!
+
+- Dependency management
+- Automatic colour-coding of code fragments

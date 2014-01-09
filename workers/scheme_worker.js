@@ -10,36 +10,40 @@
 
 // Scheme Worker //
 
-//TODO: should these take the interpreter path as an argument?
-importScripts("reader.js", "tokenizer.js", "primitives.js");
-
 onmessage = function(event) {
-    var env = create_global_frame();
 
-    var codebuffer = new Buffer(tokenize_lines(event.data.split("\n")));
+    if (event.data.type === 'set_interpreter_path') {
+        var interpreter_path = event.data.value;
+        importScripts(interpreter_path + "reader.js", interpreter_path + "tokenizer.js", interpreter_path + "primitives.js");
+    } else if (event.data.type === 'code') {
+        var code = event.data.value;
+        var env = create_global_frame();
+        var codebuffer = new Buffer(tokenize_lines(code.split("\n")));
 
-    var evalstack = [];
-
-    while (codebuffer.current() != null) {
-        try {
-            var result = scheme_eval(scheme_read(codebuffer), env);
-            if (! (result === null || result === undefined)) {
-                this.postMessage({'type': 'return_value', 'value': result.toString()});
+        while (codebuffer.current() != null) {
+            try {
+                var result = scheme_eval(scheme_read(codebuffer), env);
+                if (! (result === null || result === undefined)) {
+                    this.postMessage({'type': 'return_value', 'value': result.toString()});
+                }
+            } catch(e) {
+                var error_message = e.toString() + '\n\nCurrent Eval Stack:\n' +
+                    '-------------------------\n' + print_stack(env.stack);
+                this.postMessage({'type': 'error', 'value': error_message});
             }
-        } catch(e) {
-            var estring = e.toString() + '\n\nCurrent Eval Stack:\n'+
-                '-------------------------\n';
-            env.stack.reverse();
-            env.stack.forEach(function (e, i) {
-                estring += i.toString() + ":\t" + e.toString() + "\n";
-            });
-            this.postMessage({'type': 'error', 'value': estring});
         }
+        this.postMessage({'type': 'end'});
     }
-    this.postMessage({'type': 'end'});
 };
 
-
+function print_stack(stack) {
+    var ret = "";
+    stack.reverse();
+    stack.forEach(function (e,i) {
+        ret += i.toString() + ":\t" + e.toString() + "\n";
+    })
+    return ret;
+}
 
 //SCHEME.JS//
 
