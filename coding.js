@@ -187,8 +187,7 @@ function compute(s) {
     $_(_output).empty().append(output_fragment);
   };
 
-  w.postMessage({'type': 'set_interpreter_path', 'value': interpreter_path});
-  w.postMessage({'type': 'code', 'value': getDependedOnCode(s)});
+  w.postMessage(getDependedOnCode(s));
 
   for (var pushes = getPushes(s), i = 0; i < pushes.length; i++) {
     compute(pushes[i]);
@@ -219,8 +218,7 @@ function eval_scheme(code) {
   };
 
   console.log(code);
-  w.postMessage({'type': 'set_interpreter_path', 'value': interpreter_path});
-  w.postMessage({'type': 'code', 'value': code});
+  w.postMessage(code);
 
   return def;
 }
