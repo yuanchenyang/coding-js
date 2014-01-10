@@ -1,9 +1,11 @@
 "use strict";
 
-var interpreter_path = "";
-
+var CONFIG = {'interpreter_path': "", 'language': ""};
 function set_interpreter_path(path) {
-  interpreter_path = path;
+  CONFIG.interpreter_path = path;
+}
+function set_language(language) {
+  CONFIG.language = language; //TODO: allow mixed languages within page
 }
 
 function focus_callback() {
@@ -165,7 +167,7 @@ function compute(s) {
   var _output = s + "-output";
   var output_fragment = [];
 
-  var w = new Worker(interpreter_path + "workers/scheme_worker.js");
+  var w = new Worker(CONFIG.interpreter_path + "workers/" + CONFIG.language + ".js");
   w.onmessage = function(e) {
     if (e.data.type === "end") {
       if (output_fragment.length == 0) {
@@ -205,7 +207,7 @@ function eval_scheme(code) {
 
   var def = $.Deferred();
 
-  var w = new Worker(interpreter_path + "workers/scheme_worker.js");
+  var w = new Worker(CONFIG.interpreter_path + "workers/" + CONFIG.language + ".js");
   var out = [];
   w.onmessage = function(e) {
     if (e.data.type === "end") {
