@@ -196,6 +196,8 @@ function scheme_eval(expr, env) {
             var l = do_let_form(rest, env);
             expr = l[0];
             env = l[1];
+        } else if (first["match"] && first.match(/^c[ad]{2,6}r$/)){
+            result = do_cxr_form(first, rest, env); break;
         } else {
             var procedure = scheme_eval(first, env);
             var args = rest.map(function(operand) {
@@ -456,6 +458,19 @@ var LOGIC_FORMS = {
         "cond": do_cond_form,
         "begin": do_begin_form
         };
+
+function do_cxr_form(expr, vals, env) {
+    check_form(vals, 1);
+    var result = scheme_eval(vals.first, env);
+    for (var i = 1; i < expr.length - 1; i++) {
+        if (expr[i] == 'a') {
+            result = scheme_car(result);
+        } else {
+            result = scheme_cdr(result);
+        }
+    }
+    return result;
+}
 
 //////////////////////
 // Helper Functions //

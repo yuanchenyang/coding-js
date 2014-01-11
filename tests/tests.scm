@@ -977,3 +977,14 @@ s
 ;; Ignoring other backslashes ( only \" \\ \n and \t are supported)
 (print "\a\b\c\d")
 ; expect abcd
+
+;; Tests for c[ad]{2,6}r:
+
+(cddddr '(1 2 3 4 5 6))
+; expect (5 6)
+
+(cdddaar '(1 2 3 (4 5) 6))
+; expect 4
+
+(cddr '(1 2 3 (4 5) 6))
+; expect (3 (4 5) 6)
