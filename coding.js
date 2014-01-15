@@ -203,7 +203,7 @@ eval_scheme(code).then(function(res) {
   update DOM
 });
 */
-function eval_scheme(code) { 
+function eval_scheme(code) {
 
   var def = $.Deferred();
 
@@ -408,3 +408,20 @@ function createTOC() {
 
   $('#sidebox').animate({'right':'0%'});
 }
+
+
+$(function () {
+    var todo = Object.keys(editorOf);
+
+    (function proc() {
+        if (todo.length == 0) {
+            return;
+        }
+        try {
+            var first = todo.shift();
+            editorOf[first].getOption("onBlur")().then(proc);
+        } catch (err) {
+            proc();
+        }
+    })();
+});

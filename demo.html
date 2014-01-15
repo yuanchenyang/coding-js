@@ -59,7 +59,7 @@ li {
 
 <h3> Introduction </h3>
 
-<p> Making a code fagment interactive is very easy.
+<p> Making a code fragment interactive is very easy.
 
 <div id="scheme-plus-1">
 (+ 137 349)
@@ -86,25 +86,26 @@ editorOf["scheme-number"].setOption('onBlur', function() {
 
 <h3> Dependency management </h3>
 
-TODO
+<p>We have a frozen prompt with a function definition:</p>
 
+<div id="scheme-define">
+(define (factorial n)
+  (if (= n 0)
+      1
+      (* n (factorial (- n 1)))))
+</div>
 <script>
+  no_output_prompt("scheme-define");
+</script>
 
-var todo = Object.keys(editorOf);
+<p>We can refer to this dependency in other prompts:</p>
 
-(function proc() {
-  if (todo.length == 0) {
-    return;
-  }
-  try {
-    var first = todo.shift();
-    editorOf[first].getOption("onBlur")().then(proc);
-  } catch (err) {
-    proc();
-  }
-})();
-
-
+<div id="scheme-factorial">
+(factorial 10)
+</div>
+<script>
+  prompt("scheme-factorial");
+  addDep("scheme-factorial", ["scheme-define"])
 </script>
 
 </body>
