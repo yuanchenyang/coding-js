@@ -411,9 +411,10 @@ function createTOC() {
 
 
 $(function () {
+
     var todo = Object.keys(editorOf);
 
-    (function proc() {
+    function proc() {
         if (todo.length == 0) {
             return;
         }
@@ -423,5 +424,7 @@ $(function () {
         } catch (err) {
             proc();
         }
-    })();
+    };
+    
+    proc();
 });
