@@ -53,20 +53,149 @@ li {
 </head>
 <body>
 
-<div id="main">
-
-<p> This is a demo of web-worker-interpreter and coding.js.
+<div id="main" style="width: 80%; margin-left: 10%">
 
 <h3> Introduction </h3>
 
-<p> Making a code fragment interactive is very easy.
+<p> coding.js and web-worker-interpreters make it possible for you to make your tutorial, blog post or textbook interactive. Writing code fragments that your users can <em>edit</em> and <em>run</em> is as easy as calling the <tt>prompt</tt> function with the id of the div element your code lives in.
 
+<div style="display: inline-block; width: 100%">
+<div style="width:50%; float:left">
+<br>
 <div id="scheme-plus-1">
 (+ 137 349)
 </div>
 <script> prompt("scheme-plus-1"); </script>
+</div>
 
-<p> Or you can separate the fragment from the output.
+<div style="width:50%; display: inline-block">
+<pre>
+&lt;div id="scheme-plus-1"&gt;
+(+ 137 349)
+&lt;/div&gt;
+&lt;script&gt; 
+  prompt("scheme-plus-1"); 
+&lt;/script&gt;
+</pre>
+</div>
+</div>
+
+<p> try editing the <tt>(+ 137 349)</tt>, then press Ctrl-Enter and watch the evaluated answer (originally <tt>486</tt>) change.
+
+<h3> Including coding.js </h3>
+
+<p> To use coding.js on your own website, you simply need to include the js file and set two parameters, the interpreter path and language.
+
+<pre style="margin-left: 3em">
+&lt;script src="coding.js"> &lt;/script&gt;
+&lt;script&gt;
+  set_interpreter_path("");
+  set_language("scheme");
+&lt;/script&gt;
+</pre>
+
+<p> In this example, the language is set to scheme, so coding.js invokes a scheme interpreter behind the scenes whenever your user edits your code. The interpreter path is the relative path to the directory coding.js lives in and is used to load additional files (as the files are loaded relative to this page and not coding.js). For instance if you place coding.js in a <tt>js/ext/</tt> subdirectory, do this instead.
+
+<pre style="margin-left: 3em">
+&lt;script src="js/ext/coding.js"> &lt;/script&gt;
+&lt;script&gt;
+  set_interpreter_path("js/ext/");
+  set_language("scheme");
+&lt;/script&gt;
+</pre>
+
+<h3> Dependency management </h3>
+
+<p>Often, code fragments depend on each other. We have a prompt with a function definition:</p>
+
+<div style="display: inline-block; width: 100%">
+<div style="width:50%; float:left">
+<br>
+<div id="scheme-define-factorial">
+(define (factorial n)
+  (if (= n 0)
+      1
+      (* n (factorial (- n 1)))))
+</div>
+<script>
+  prompt("scheme-define-factorial");
+</script>
+</div>
+
+<div style="width:50%; display: inline-block">
+<pre>
+&lt;div id="scheme-define-factorial"&gt;
+(define (factorial n)
+  (if (= n 0)
+      1
+      (* n (factorial (- n 1)))))
+&lt;/div&gt;
+&lt;script&gt;
+  prompt("scheme-define-factorial");
+&lt;/script&gt;
+</pre>
+</div>
+</div>
+
+<p>We can refer to this dependency in other prompts:</p>
+
+<div style="display: inline-block; width: 100%">
+<div style="width:50%; float:left">
+<br>
+<div id="scheme-factorial">
+(factorial 10)
+</div>
+<script>
+  prompt("scheme-factorial", ["scheme-define-factorial"]);
+</script>
+</div>
+
+<div style="width:50%; display: inline-block">
+<pre>
+&lt;div id="scheme-factorial"&gt;
+(factorial 10)
+&lt;/div&gt;
+&lt;script&gt;
+  prompt("scheme-factorial", ["scheme-define-factorial"]);
+&lt;/script&gt;
+</pre>
+</div>
+</div>
+
+<p> This is done by passing an additional argument to <tt>prompt</tt>, an array which lists the id's of all the dependencies.
+
+<h3> Related functions </h3>
+
+<p> <tt>prompt</tt> is part of a family of functions designed to be used "as-is". The other functions in the family introduce slight variations on <tt>prompt</tt>. They include <tt>frozen_prompt</tt>, <tt>no_output_prompt</tt>, <tt>no_output_frozen_prompt</tt> and <tt>hidden_prompt</tt>.
+
+<p> <tt>frozen_prompt</tt> makes a prompt that is not editable. Useful for exercise where users must wirte some definition for a function to be true.
+
+<div style="display: inline-block; width: 100%">
+<div style="width:50%; float:left">
+<br> <br>
+<div id="scheme-square-x">
+(define x 10)
+(* x x)
+</div>
+<script> frozen_prompt("scheme-square-x"); </script>
+</div>
+
+<div style="width:50%; display: inline-block">
+<pre>
+&lt;div id="scheme-square-x"&gt;
+(define x 10)
+(* x x)
+&lt;/div&gt;
+&lt;script&gt; 
+  frozen_prompt("scheme-square-x"); 
+&lt;/script&gt;
+</pre>
+</div>
+</div>
+
+<tt>no_output_prompt</tt> suppresses the output, so only the code is visible. <tt>no_output_frozen_prompt</tt> is a frozen prompt that suppresses output. Lastly, <tt>hidden_prompt</tt> makes both the code and the output invisible.
+
+<h3> Internals </h3>
 
 <div id="scheme-number">
 486
@@ -82,30 +211,6 @@ makeEditable("scheme-number");
 editorOf["scheme-number"].setOption('onBlur', function() {
   return compute("scheme-number");
 });
-</script>
-
-<h3> Dependency management </h3>
-
-<p>We have a frozen prompt with a function definition:</p>
-
-<div id="scheme-define">
-(define (factorial n)
-  (if (= n 0)
-      1
-      (* n (factorial (- n 1)))))
-</div>
-<script>
-  no_output_prompt("scheme-define");
-</script>
-
-<p>We can refer to this dependency in other prompts:</p>
-
-<div id="scheme-factorial">
-(factorial 10)
-</div>
-<script>
-  prompt("scheme-factorial");
-  addDep("scheme-factorial", ["scheme-define"])
 </script>
 
 </body>
