@@ -150,11 +150,6 @@ function addDep(_e, deps) {
   }
 }
 
-function promptDep(_a, deps) {
-  prompt(_a);
-  addDep(_a, deps);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 function addOutput(_e) {

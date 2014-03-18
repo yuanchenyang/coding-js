@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-
+<title>coding.js</title>
 <link rel="stylesheet" type="text/css" href="deps/codemirror/lib/codemirror.css" />
 <link rel="stylesheet" type="text/css" href="coding.css" />
 <style>
@@ -11,7 +11,6 @@ body {
   margin-left: 3em;
 }
 
-/*english text, meant for reading*/
 p, table, label, h1, h2, h3, h4, a {
   font-family:Georgia;
   color:#2E2E2E;
@@ -39,6 +38,21 @@ li {
   font-family:Georgia;
   color:#2E2E2E;
 }
+
+div.two-up {
+  display: inline-block;
+  width: 100%;
+}
+
+div.two-left {
+  width:50%; 
+  float:left;
+}
+
+div.two-right{
+  width:50%;
+  display: inline-block;
+}
 </style>
 
 <script src="deps/lib-xj.js"></script>
@@ -59,20 +73,21 @@ li {
 
 <p> coding.js and web-worker-interpreters make it possible for you to make your tutorial, blog post or textbook interactive. Writing code fragments that your users can <em>edit</em> and <em>run</em> is as easy as calling the <tt>prompt</tt> function with the id of the div element your code lives in.
 
-<div style="display: inline-block; width: 100%">
-<div style="width:50%; float:left">
-<br>
+<div class="two-up">
+<div class="two-left">
+<br> <br>
 <div id="scheme-plus-1">
 (+ 137 349)
 </div>
 <script> prompt("scheme-plus-1"); </script>
 </div>
 
-<div style="width:50%; display: inline-block">
+<div class="two-right">
 <pre>
 &lt;div id="scheme-plus-1"&gt;
 (+ 137 349)
 &lt;/div&gt;
+
 &lt;script&gt; 
   prompt("scheme-plus-1"); 
 &lt;/script&gt;
@@ -84,7 +99,7 @@ li {
 
 <h3> Including coding.js </h3>
 
-<p> To use coding.js on your own website, you simply need to include the js file and set two parameters, the interpreter path and language.
+<p> To use coding.js on your own website, simply clone the <a href="https://github.com/yuanchenyang/web-worker-interpreter"> web-worker-interpreters</a> github project and include the coding.js file. You also need to set two parameters, the interpreter path and language.
 
 <pre style="margin-left: 3em">
 &lt;script src="coding.js"> &lt;/script&gt;
@@ -108,9 +123,9 @@ li {
 
 <p>Often, code fragments depend on each other. We have a prompt with a function definition:</p>
 
-<div style="display: inline-block; width: 100%">
-<div style="width:50%; float:left">
-<br>
+<div class="two-up">
+<div class="two-left">
+<br> <br>
 <div id="scheme-define-factorial">
 (define (factorial n)
   (if (= n 0)
@@ -122,7 +137,7 @@ li {
 </script>
 </div>
 
-<div style="width:50%; display: inline-block">
+<div class="two-right">
 <pre>
 &lt;div id="scheme-define-factorial"&gt;
 (define (factorial n)
@@ -130,6 +145,7 @@ li {
       1
       (* n (factorial (- n 1)))))
 &lt;/div&gt;
+
 &lt;script&gt;
   prompt("scheme-define-factorial");
 &lt;/script&gt;
@@ -137,10 +153,10 @@ li {
 </div>
 </div>
 
-<p>We can refer to this dependency in other prompts:</p>
+<p>We can reuse this definition of <tt>factorial</tt> in other code fragments:</p>
 
-<div style="display: inline-block; width: 100%">
-<div style="width:50%; float:left">
+<div class="two-up">
+<div class="two-left">
 <br>
 <div id="scheme-factorial">
 (factorial 10)
@@ -150,11 +166,12 @@ li {
 </script>
 </div>
 
-<div style="width:50%; display: inline-block">
+<div class="two-right">
 <pre>
 &lt;div id="scheme-factorial"&gt;
-(factorial 10)
+(factorial 10);
 &lt;/div&gt;
+
 &lt;script&gt;
   prompt("scheme-factorial", ["scheme-define-factorial"]);
 &lt;/script&gt;
@@ -162,7 +179,7 @@ li {
 </div>
 </div>
 
-<p> This is done by passing an additional argument to <tt>prompt</tt>, an array which lists the id's of all the dependencies.
+<p> This is done by passing an additional argument to <tt>prompt</tt>, an array which lists the id's of all the dependencies. When a dependency is updated, everything that depends on it is changed as well; try modifying the definition of <tt>factorial</tt> and watch the call to <tt>(factorial 10)</tt> change.
 
 <h3> Related functions </h3>
 
@@ -170,33 +187,72 @@ li {
 
 <p> <tt>frozen_prompt</tt> makes a prompt that is not editable. Useful for exercise where users must wirte some definition for a function to be true.
 
-<div style="display: inline-block; width: 100%">
-<div style="width:50%; float:left">
-<br> <br>
-<div id="scheme-square-x">
+<div class="two-up">
+<div class="two-left">
+<br>
+<div id="scheme-define-x-10">
 (define x 10)
+</div>
+<div id="scheme-square-x">
 (* x x)
 </div>
-<script> frozen_prompt("scheme-square-x"); </script>
+<script>
+prompt("scheme-define-x-10");
+frozen_prompt("scheme-square-x", ["scheme-define-x-10"]); 
+</script>
 </div>
 
-<div style="width:50%; display: inline-block">
+<div class="two-right">
 <pre>
+&lt;div id="scheme-define-x-10"&gt;
+(define x 10)
+&lt;/div&gt;
+
 &lt;div id="scheme-square-x"&gt;
 (define x 10)
-(* x x)
+(* x x);
 &lt;/div&gt;
+
 &lt;script&gt; 
-  frozen_prompt("scheme-square-x"); 
+  prompt("scheme-define-x-10");
+  frozen_prompt("scheme-square-x", ["scheme-define-x-10"]); 
 &lt;/script&gt;
 </pre>
 </div>
 </div>
 
-<tt>no_output_prompt</tt> suppresses the output, so only the code is visible. <tt>no_output_frozen_prompt</tt> is a frozen prompt that suppresses output. Lastly, <tt>hidden_prompt</tt> makes both the code and the output invisible.
+<p> <tt>no_output_prompt</tt> suppresses the output, so only the code is visible. It is not very useful.
+
+<p> <tt>no_output_frozen_prompt</tt> is a frozen prompt that suppresses output. It is useful for showing off language features as it suppresses error messages.
+
+<div class="two-up">
+<div class="two-left">
+<br>
+<div id="scheme-if-syntax">
+(if &lt;predicate&gt; &lt;consequent&gt; &lt;alternative&gt;)
+</div>
+<script>
+  no_output_frozen_prompt("scheme-if-syntax");
+</script>
+</div>
+
+<div class="two-right">
+<pre>
+&lt;div id="scheme-factorial"&gt;
+(if &lt;predicate&gt; &lt;consequent&gt; &lt;alternative&gt;)
+&lt;/div&gt;
+&lt;script&gt;
+  no_output_frozen_prompt("scheme-if-syntax");
+&lt;/script&gt;
+</pre>
+</div>
+</div>
+
+<p> Lastly, <tt>hidden_prompt</tt> makes both the code and the output invisible, and can be used for exercise scaffolding, black-box functions, etc.
 
 <h3> Internals </h3>
 
+<p> This example demonstrates using some internal functions. <tt>makeEditable</tt> causes a div to be converted into a CodeMirror editor instance, preloaded with the code it contained.
 <div id="scheme-number">
 486
 </div>
@@ -204,7 +260,7 @@ li {
 makeEditable("scheme-number");
 </script>
 
-<p> like so:
+<p> the <tt>compute</tt> function calls a scheme (or language of your choice) interpreter, and in fact we can get all our functionality by binding it to the <tt>onBlur</tt> event listener that CodeMirror gives us.
 
 <div id="scheme-number-output" class="output"> </div>
 <script>
