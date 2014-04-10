@@ -983,8 +983,11 @@ s
 (cddddr '(1 2 3 4 5 6))
 ; expect (5 6)
 
-(cdddaar '(1 2 3 (4 5) 6))
+(caaddr '(1 2 (4 5) 6))
 ; expect 4
+
+(cadr '((1) (2)))
+; expect (2)
 
 (cddr '(1 2 3 (4 5) 6))
 ; expect (3 (4 5) 6)

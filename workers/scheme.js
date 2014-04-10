@@ -462,7 +462,7 @@ var LOGIC_FORMS = {
 function do_cxr_form(expr, vals, env) {
     check_form(vals, 1);
     var result = scheme_eval(vals.first, env);
-    for (var i = 1; i < expr.length - 1; i++) {
+    for (var i = expr.length - 2; i > 0; i--) {
         if (expr[i] == 'a') {
             result = scheme_car(result);
         } else {
