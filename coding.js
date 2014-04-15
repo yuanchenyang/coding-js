@@ -58,6 +58,14 @@ function eval_editor(_editor) {
 
 var editorOf = {};
 
+function setUpdateFunction(editor, fn) {
+    editor.setOption('extraKeys', {'Ctrl-Enter': fn});
+}
+
+function getUpdateFunction(editor) {
+    return editor.getOption('extraKeys')['Ctrl-Enter'];
+}
+
 function makeEditable(_editor) {
 
   if (editorOf[_editor]) {
@@ -75,9 +83,9 @@ function makeEditable(_editor) {
     'onFocus': function() {console.log("focus_callback" + _editor); focus_callback(_editor);}
   });
 
-  editor.setOption('extraKeys', {'Ctrl-Enter': function() {
-    editor.getOption("onBlur")();
-  }});
+  // editor.setOption('extraKeys', {'Ctrl-Enter': function() {
+  //   editor.getOption("onBlur")();
+  // }});
 
   editorOf[_editor] = editor;
   return editor;
@@ -87,7 +95,7 @@ function linkEditor(_editor, _output, func) { //sync
 
   var editor = editorOf[_editor];
 
-  editor.setOption('onBlur', function() {
+  setUpdateFunction(editor, function() {
     $_(_output).empty().append($("<span>" + func(_editor, editor.getValue()) + "</span>"));
   });
 }
@@ -221,7 +229,7 @@ function eval_scheme(code) {
 }
 
 function prompt(s, deps) {
-  makeEditable(s).setOption('onBlur', function() {
+  setUpdateFunction(makeEditable(s) , function() {
     return compute(s);
   });
   addOutput(s);
@@ -232,7 +240,7 @@ function prompt(s, deps) {
 function frozen_prompt(s, deps) {
   makeEditable(s);
   editorOf[s].setOption("readOnly", 'nocursor');
-  editorOf[s].setOption('onBlur', function() {
+  setUpdateFunction(editorOf[s], function() {
     return compute(s);
   });
   addOutput(s);
@@ -289,7 +297,7 @@ function equalp_answer(s, a) {
   makePromptingInput(s + "-input");
   addOutput(s + "-input");
 
-  editorOf[s + "-input"].setOption("onBlur", function() {
+  setUpdateFunction(editorOf[s + "-input"], function() {
     var ans = editorOf[s + "-input"].getValue();
     var code = "(equal? (quote {0}) (quote {1}))".format(ans, a);
 
@@ -405,18 +413,18 @@ function createTOC() {
 }
 
 
-$(function () {
-    var todo = Object.keys(editorOf);
-
-    (function proc() {
-        if (todo.length == 0) {
-            return;
-        }
-        try {
-            var first = todo.shift();
-            editorOf[first].getOption("onBlur")().then(proc);
-        } catch (err) {
-            proc();
-        }
-    })();
-});
+// $(function () {
+//     var todo = Object.keys(editorOf);
+//
+//     (function proc() {
+//         if (todo.length == 0) {
+//             return;
+//         }
+//         try {
+//             var first = todo.shift();
+//             getUpdateFunction(editorOf[first])().then(proc);
+//         } catch (err) {
+//             proc();
+//         }
+//     })();
+// });
