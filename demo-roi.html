@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+<head>
+<meta charset="UTF-8">
+<title>coding.js</title>
+<link rel="stylesheet" type="text/css" href="deps/codemirror/lib/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="coding.css" />
+<style>
+body {
+  margin-top: 1em;
+  margin-left: 3em;
+}
+
+p, table, label, h1, h2, h3, h4, a {
+  font-family:Georgia;
+  color:#2E2E2E;
+  line-height:1.5em;
+  text-align: justify;
+}
+
+h1, h2, h3, h4 {
+  margin-top: 1.5em;
+  color: #444;
+}
+
+h2 {
+  margin-top: 2em;
+}
+
+tt {
+  border: 1px #999999 solid;
+  padding-left:1px;
+  padding-right:1px;
+  background-color: rgba(0,0,0,0.05);
+}
+
+li {
+  font-family:Georgia;
+  color:#2E2E2E;
+}
+
+div.two-up {
+  display: inline-block;
+  width: 100%;
+}
+
+div.two-left {
+  width:50%; 
+  float:left;
+}
+
+div.two-right{
+  width:50%;
+  display: inline-block;
+}
+
+table{
+    border: 1px solid black;
+    table-layout: fixed;
+    width: 500px;
+}
+
+th, td {
+    border: 1px solid black;
+    overflow: hidden;
+}
+
+div.CodeMirror {
+    font-size: 14pt;
+}
+
+</style>
+
+<script src="deps/lib-xj.js"></script>
+<script src="deps/codemirror/lib/codemirror.js"></script>
+<script src="deps/codemirror/mode/scheme/scheme.js"></script>
+<script src="deps/jquery.min.js"></script>
+<script src="coding.js"> </script>
+<script>
+  set_interpreter_path("");
+  set_language("scheme");
+</script>
+</head>
+<body>
+
+<div id="main" style="width: 80%; margin-left: 10%">
+
+<h3> Input </h3>
+
+<table>
+<tr>
+<td style="width: 400px">
+Avg. miles driven roundtrip per document signing
+</td>
+<td style="width: 100px; text-align: center">
+<div id="miles-per-document">
+20
+</div>
+</td>
+</tr>
+<tr>
+<td style="width: 400px">
+Avg. cost of a gallon of gas
+</td>
+<td style="width: 100px; text-align: center">
+<div id="cost-per-gallon">
+3.2
+</div>
+</td>
+</tr>
+<tr>
+<td style="width: 400px">
+Avg. Mile Per Gallon of vehicle driven to signing
+</td>
+<td style="width: 100px; text-align: center">
+<div id="miles-per-gallon">
+15
+</div>
+</td>
+</tr>
+</table>
+<p> 
+<script>
+makeEditable("miles-per-document");
+makeEditable("cost-per-gallon");
+makeEditable("miles-per-gallon");
+</script>
+
+<h3> Output </h3>
+
+<table>
+<tr>
+<td style="width: 400px">
+Avg. cost of gas per document delivered
+</td>
+<td style="width: 100px; text-align: center">
+<div id="cost-per-document">
+20
+</div>
+</td>
+</tr>
+</table>
+
+<script>
+function calculate_cost_per_document() {
+  var mpd = editorOf["miles-per-document"].getValue();
+  var cpg = editorOf["cost-per-gallon"].getValue();
+  var mpg = editorOf["miles-per-gallon"].getValue();
+
+  var ans = mpd * cpg / mpg;
+  var ret = Math.floor(ans * 100 + 0.5)/100
+
+  $("#cost-per-document").html(ret);
+}
+
+editorOf["miles-per-document"].setOption('onBlur', calculate_cost_per_document);
+editorOf["cost-per-gallon"].setOption('onBlur', calculate_cost_per_document);
+editorOf["miles-per-gallon"].setOption('onBlur', calculate_cost_per_document);
+
+</script>
+
+</body>
+</html>
