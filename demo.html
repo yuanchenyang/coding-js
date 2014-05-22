@@ -7,14 +7,12 @@
 <link rel="stylesheet" type="text/css" href="coding.css" />
 <link rel="stylesheet" type="text/css" href="base.css" />
 
-<script src="deps/lib-xj.js"></script>
 <script src="deps/codemirror/lib/codemirror.js"></script>
 <script src="deps/codemirror/mode/scheme/scheme.js"></script>
 <script src="deps/jquery.min.js"></script>
 <script src="coding.js"> </script>
 <script>
-  set_interpreter_path("");
-  set_language("scheme");
+  var c = new CodingJS("", "scheme");
 </script>
 </head>
 <body>
@@ -31,7 +29,7 @@
 <div id="scheme-plus-1">
 (+ 137 349)
 </div>
-<script> prompt("scheme-plus-1"); </script>
+<script> c.prompt("scheme-plus-1"); </script>
 </div>
 
 <div class="two-right">
@@ -41,7 +39,7 @@
 &lt;/div&gt;
 
 &lt;script&gt;
-  prompt("scheme-plus-1");
+  c.prompt("scheme-plus-1");
 &lt;/script&gt;
 </pre>
 </div>
@@ -51,23 +49,21 @@
 
 <h3> Including coding.js </h3>
 
-<p> To use coding.js on your own website, simply clone the <a href="https://github.com/yuanchenyang/web-worker-interpreter"> web-worker-interpreters</a> github project and include the coding.js file. You also need to set two parameters, the interpreter path and language.
+<p> To use coding.js on your own website, simply clone the <a href="https://github.com/yuanchenyang/web-worker-interpreter"> web-worker-interpreters</a> github project and include the coding.js file. We can create a <tt>CodingJS</tt> object, which by default to a scheme interpreter.
 
 <pre style="margin-left: 3em">
 &lt;script src="coding.js"> &lt;/script&gt;
 &lt;script&gt;
-  set_interpreter_path("");
-  set_language("scheme");
+  c = CodingJS();
 &lt;/script&gt;
 </pre>
 
-<p> In this example, the language is set to scheme, so coding.js invokes a scheme interpreter behind the scenes whenever your user edits your code. The interpreter path is the relative path to the directory coding.js lives in and is used to load additional files (as the files are loaded relative to this page and not coding.js). For instance if you place coding.js in a <tt>js/ext/</tt> subdirectory, do this instead.
+<p> In this example, the language is set to scheme, so coding.js invokes a scheme interpreter behind the scenes whenever your user edits your code. The interpreter path is the relative path to the directory coding.js lives in and is used to load additional files (as the files are loaded relative to this page and not coding.js). For instance if you place coding.js in a <tt>js/ext/</tt> subdirectory, and want to use the language <tt>logic</tt>, do this instead.
 
 <pre style="margin-left: 3em">
 &lt;script src="js/ext/coding.js"> &lt;/script&gt;
 &lt;script&gt;
-  set_interpreter_path("js/ext/");
-  set_language("scheme");
+  c = CodingJS("js/ext", "logic");
 &lt;/script&gt;
 </pre>
 
@@ -85,7 +81,7 @@
       (* n (factorial (- n 1)))))
 </div>
 <script>
-  prompt("scheme-define-factorial");
+  c.prompt("scheme-define-factorial");
 </script>
 </div>
 
@@ -99,7 +95,7 @@
 &lt;/div&gt;
 
 &lt;script&gt;
-  prompt("scheme-define-factorial");
+  c.prompt("scheme-define-factorial");
 &lt;/script&gt;
 </pre>
 </div>
@@ -114,7 +110,7 @@
 (factorial 10)
 </div>
 <script>
-  prompt("scheme-factorial", ["scheme-define-factorial"]);
+  c.prompt("scheme-factorial", ["scheme-define-factorial"]);
 </script>
 </div>
 
@@ -125,7 +121,7 @@
 &lt;/div&gt;
 
 &lt;script&gt;
-  prompt("scheme-factorial", ["scheme-define-factorial"]);
+  c.prompt("scheme-factorial", ["scheme-define-factorial"]);
 &lt;/script&gt;
 </pre>
 </div>
@@ -149,8 +145,8 @@
 (* x x)
 </div>
 <script>
-prompt("scheme-define-x-10");
-frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
+c.prompt("scheme-define-x-10");
+c.frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
 </script>
 </div>
 
@@ -166,8 +162,8 @@ frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
 &lt;/div&gt;
 
 &lt;script&gt;
-  prompt("scheme-define-x-10");
-  frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
+  c.prompt("scheme-define-x-10");
+  c.frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
 &lt;/script&gt;
 </pre>
 </div>
@@ -184,7 +180,7 @@ frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
 (if &lt;predicate&gt; &lt;consequent&gt; &lt;alternative&gt;)
 </div>
 <script>
-  no_output_frozen_prompt("scheme-if-syntax");
+  c.no_output_frozen_prompt("scheme-if-syntax");
 </script>
 </div>
 
@@ -194,7 +190,7 @@ frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
 (if &lt;predicate&gt; &lt;consequent&gt; &lt;alternative&gt;)
 &lt;/div&gt;
 &lt;script&gt;
-  no_output_frozen_prompt("scheme-if-syntax");
+  c.no_output_frozen_prompt("scheme-if-syntax");
 &lt;/script&gt;
 </pre>
 </div>
@@ -209,14 +205,14 @@ frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
 486
 </div>
 <script>
-makeEditable("scheme-number");
+c.makeEditable("scheme-number");
 </script>
 
 <p> the <tt>compute</tt> function calls a scheme (or language of your choice) interpreter, and in fact we can get all our functionality by binding it to the <tt>onBlur</tt> event listener that CodeMirror gives us.
 
 <div id="scheme-number-output" class="output"> </div>
 <script>
-editorOf["scheme-number"].setOption('onBlur', function() {
+c.editorOf["scheme-number"].setOption('onBlur', function() {
   return compute("scheme-number");
 });
 </script>
