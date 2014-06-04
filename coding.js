@@ -1,6 +1,5 @@
 "use strict";
 
-
 String.prototype.format = function () {
     var o = Array.prototype.slice.call(arguments);
     return this.replace(/{([^{}]*)}/g,
@@ -31,7 +30,7 @@ var CodingJS = (function CodingJS() {
             //for clients to override
         };
 
-        coding.cleanCode = function (code) {
+        coding.clean_code = function (code) {
             //cleans extra newlines that exist to make in-html code look better
             return code.replace(/^\n/, "").replace(/\n*$/, "").replace(/[ \t]*\n/g, "\n").replace(/\s*$/, "");
         };
@@ -48,12 +47,8 @@ var CodingJS = (function CodingJS() {
 
         ////////////////////////////////////////////////////////////////////////////////
 
-        coding.arrayEq = function (arr1, arr2) {
+        coding.array_eq = function (arr1, arr2) {
             return $(arr1).not(arr2).length == 0 && $(arr2).not(arr1).length == 0;
-        };
-
-        coding.isArray = function (o) {
-            return Object.prototype.toString.call(o) === '[object Array]';
         };
 
         coding.shuffle = function (myArray) {
@@ -70,44 +65,44 @@ var CodingJS = (function CodingJS() {
 
         ////////////////////////////////////////////////////////////////////////////////
 
-        coding.depsOf = {};
+        coding.deps_of = {};
 
-        coding.getDeps = function (_editor) {
-            if (coding.depsOf[_editor]) {
-                return coding.depsOf[_editor];
+        coding.get_deps = function (_editor) {
+            if (coding.deps_of[_editor]) {
+                return coding.deps_of[_editor];
             } else {
                 return [];
             }
         };
 
 
-        coding.getDependedOnCode = function (_editor) {
+        coding.get_depended_on_code = function (_editor) {
             var code = "";
 
-            for (var deps = coding.getDeps(_editor), i = 0; i < deps.length; i++) {
-                code += coding.getDependedOnCode(deps[i]);
+            for (var deps = coding.get_deps(_editor), i = 0; i < deps.length; i++) {
+                code += coding.get_depended_on_code(deps[i]);
             }
 
-            return code + coding.editorOf[_editor].getValue();
+            return code + coding.editor_of[_editor].getValue();
         };
 
         coding.eval_editor = function (_editor) {
 
-            return coding.eval_scheme(coding.getDependedOnCode(_editor));
+            return coding.eval_scheme(coding.get_depended_on_code(_editor));
         };
 
         ////////////////////////////////////////////////////////////////////////////////
 
-        coding.editorOf = {};
+        coding.editor_of = {};
 
-        coding.makeEditable = function (_editor) {
+        coding.make_editable = function (_editor) {
 
-            if (coding.editorOf[_editor]) {
-                throw "Error: coding.makeEditable called with " + _editor + " which already exists!";
+            if (coding.editor_of[_editor]) {
+                throw "Error: coding.make_editable called with " + _editor + " which already exists!";
             }
 
             var $editor = coding.$_(_editor);
-            var code = coding.cleanCode($editor.text());
+            var code = coding.clean_code($editor.text());
 
             $editor.empty();
 
@@ -121,13 +116,13 @@ var CodingJS = (function CodingJS() {
                 editor.getOption("onBlur")();
             }});
 
-            coding.editorOf[_editor] = editor;
+            coding.editor_of[_editor] = editor;
             return editor;
         };
 
-        coding.linkEditor = function (_editor, _output, func) { //sync
+        coding.link_editor = function (_editor, _output, func) { //sync
 
-            var editor = coding.editorOf[_editor];
+            var editor = coding.editor_of[_editor];
 
             editor.setOption('onBlur', function() {
                 coding.$_(_output).empty().append($("<span>" + func(_editor, editor.getValue()) + "</span>"));
@@ -136,65 +131,65 @@ var CodingJS = (function CodingJS() {
 
         ////////////////////////////////////////////////////////////////////////////////
 
-        coding.getAllDeps = function (s) {
+        coding.get_all_deps = function (s) {
             var ret = [];
-            for (var i = 0, d = coding.getDeps(s); i < d.length; i++) {
-                ret = ret.concat(coding.getAllDeps(d[i]));
+            for (var i = 0, d = coding.get_deps(s); i < d.length; i++) {
+                ret = ret.concat(coding.get_all_deps(d[i]));
                 ret.push(d[i]);
             }
             return ret;
         };
 
-        coding.getAllPushes = function (s) {
+        coding.get_all_pushes = function (s) {
             var ret = [];
-            for (var i = 0, d = coding.getPushes(s); i < d.length; i++) {
+            for (var i = 0, d = coding.get_pushes(s); i < d.length; i++) {
                 ret.push(d[i]);
-                ret = ret.concat(coding.getAllPushes(d[i]));
+                ret = ret.concat(coding.get_all_pushes(d[i]));
             }
             return ret;
         };
 
         coding.focus_callback = function (s) {
             var ts = "";
-            for (var i = 0, d = coding.getAllDeps(s); i < d.length; i++) {  //TODO list all deps
-                ts += coding.editorOf[d[i]].getValue() + "\n\n";
+            for (var i = 0, d = coding.get_all_deps(s); i < d.length; i++) {  //TODO list all deps
+                ts += coding.editor_of[d[i]].getValue() + "\n\n";
             }
 
-            ts += "<b>" + coding.editorOf[s].getValue() + "</b>";
+            ts += "<b>" + coding.editor_of[s].getValue() + "</b>";
 
             $("#currently-editing").html("<pre>" + ts + "</pre>");
         };
 
         ////////////////////////////////////////////////////////////////////////////////
 
-        coding.pushesOf = {};
+        coding.pushes_of = {};
 
-        coding.getPushes = function (_editor) {
-            if (coding.pushesOf[_editor]) {
-                return coding.pushesOf[_editor];
+        coding.get_pushes = function (_editor) {
+            if (coding.pushes_of[_editor]) {
+                return coding.pushes_of[_editor];
             } else {
                 return [];
             }
         };
 
-        coding.addDep = function (_e, deps) {
+        coding.add_dep = function (_e, deps) {
             if (!$.isArray(deps)) {
-                throw "deps is coding.not an array: coding.addDep " + _e;
+                throw "deps is coding.not an array: coding.add_dep " + _e;
             }
-            coding.depsOf[_e] = deps;
+            coding.deps_of[_e] = deps;
             for (var i in deps) {
-                var p = coding.pushesOf[deps[i]];
+                var p = coding.pushes_of[deps[i]];
                 if (p) {
                     p.push(_e);
                 } else {
-                    coding.pushesOf[deps[i]] = [_e];
+                    coding.pushes_of[deps[i]] = [_e];
                 }
             }
         };
 
         ///////////////////////////////////////////////////////////////////////////////
 
-        coding.addOutput = function (_e) {
+        coding.add_output = function (_e) {
             coding.$_(_e).after($('<div>', {'id': _e + "-output", 'class': "output"}));
         };
 
@@ -226,9 +221,9 @@ var CodingJS = (function CodingJS() {
                 coding.$_(_output).empty().append(output_fragment);
             };
 
-            w.postMessage(coding.getDependedOnCode(s));
+            w.postMessage(coding.get_depended_on_code(s));
 
-            for (var pushes = coding.getPushes(s), i = 0; i < pushes.length; i++) {
+            for (var pushes = coding.get_pushes(s), i = 0; i < pushes.length; i++) {
                 coding.compute(pushes[i]);
             }
             return def; //for template code to chain
@@ -263,60 +258,60 @@ var CodingJS = (function CodingJS() {
         };
 
         coding.prompt = function (s, deps) {
-            coding.makeEditable(s).setOption('onBlur', function() {
+            coding.make_editable(s).setOption('onBlur', function() {
                 return coding.compute(s);
             });
-            coding.addOutput(s);
-            coding.addDep(s, (deps || []));
+            coding.add_output(s);
+            coding.add_dep(s, (deps || []));
 
         };
 
         coding.frozen_prompt = function (s, deps) {
-            coding.makeEditable(s);
-            coding.editorOf[s].setOption("readOnly", 'coding.nocursor');
-            coding.editorOf[s].setOption('onBlur', function() {
+            coding.make_editable(s);
+            coding.editor_of[s].setOption("readOnly", 'coding.nocursor');
+            coding.editor_of[s].setOption('onBlur', function() {
                 return coding.compute(s);
             });
-            coding.addOutput(s);
-            coding.addDep(s, (deps || []));
+            coding.add_output(s);
+            coding.add_dep(s, (deps || []));
         };
 
         coding.hidden_prompt = function (s, deps) {
-            coding.makeEditable(s);
-            coding.addOutput(s);
+            coding.make_editable(s);
+            coding.add_output(s);
 
             coding.$_(s).hide();
             coding.$_(s + "-output").hide();
 
-            coding.addDep(s, (deps || []));
+            coding.add_dep(s, (deps || []));
         };
 
         coding.no_output_prompt = function (s, deps) {
-            coding.makeEditable(s);
+            coding.make_editable(s);
 
-            coding.addDep(s, (deps || []));
+            coding.add_dep(s, (deps || []));
         };
 
         coding.no_output_frozen_prompt = function (s, deps) {
-            coding.makeEditable(s);
+            coding.make_editable(s);
             coding.$_(s).find(".CodeMirror-scroll").addClass("static");
-            coding.editorOf[s].setOption("readOnly", 'coding.nocursor');
+            coding.editor_of[s].setOption("readOnly", 'coding.nocursor');
 
-            coding.addDep(s, (deps || []));
+            coding.add_dep(s, (deps || []));
         };
 
-        coding.makeStatic = function (_static) { //and coding.no output
+        coding.make_static = function (_static) { //and coding.no output
             coding.no_output_frozen_prompt(_static);
         };
 
         ////////////////////////////////////////////////////////////////////////////////
 
         coding.answer = function (s, a) {
-            coding.makeStatic(s);
+            coding.make_static(s);
             coding.$_(s).after($('<div>', {'id': s + "-input", 'class': "input"}));
-            coding.makePromptingInput(s + "-input");
-            coding.addOutput(s + "-input");
-            coding.linkEditor(s + "-input", s + "-input-output", function(x, y) {
+            coding.make_prompting_input(s + "-input");
+            coding.add_output(s + "-input");
+            coding.link_editor(s + "-input", s + "-input-output", function(x, y) {
                 if (y == a) {
                     return "<div class='right-answer'> \u2713 </div>";
                 } else {
@@ -326,13 +321,13 @@ var CodingJS = (function CodingJS() {
         };
 
         coding.equalp_answer = function (s, a) {
-            coding.makeStatic(s);
+            coding.make_static(s);
             coding.$_(s).after($('<div>', {'id': s + "-input", 'class': "input"}));
-            coding.makePromptingInput(s + "-input");
-            coding.addOutput(s + "-input");
+            coding.make_prompting_input(s + "-input");
+            coding.add_output(s + "-input");
 
-            coding.editorOf[s + "-input"].setOption("onBlur", function() {
-                var ans = coding.editorOf[s + "-input"].getValue();
+            coding.editor_of[s + "-input"].setOption("onBlur", function() {
+                var ans = coding.editor_of[s + "-input"].getValue();
                 var code = "(equal? (quote {0}) (quote {1}))".format(ans, a);
 
                 coding.eval_scheme(code).then(function(res) {
@@ -345,15 +340,15 @@ var CodingJS = (function CodingJS() {
             });
         };
 
-        coding.makePromptingInput = function (i) {
-            coding.makeChangeOnFocusInput(i, "'your-input-here", "");
+        coding.make_prompting_input = function (i) {
+            coding.make_change_on_focus_input(i, "'your-input-here", "");
         };
 
-        coding.makeChangeOnFocusInput = function (i, before, after) {
+        coding.make_change_on_focus_input = function (i, before, after) {
 
-            coding.makeEditable(i);
+            coding.make_editable(i);
 
-            var e = coding.editorOf[i];
+            var e = coding.editor_of[i];
             e.setValue(before);
 
             var oldOnFocus = e.getOption("onFocus");
@@ -365,7 +360,7 @@ var CodingJS = (function CodingJS() {
             });
         };
 
-        coding.makeForm = function (uid, right_entries, wrong_entries) {
+        coding.make_form = function (uid, right_entries, wrong_entries) {
 
             var form = $('<form>', {'id': uid});
 
@@ -378,7 +373,7 @@ var CodingJS = (function CodingJS() {
                 entries.push({text: wrong_entries[i], score: 'wrong'});
             }
 
-            shuffle(entries);
+            coding.shuffle(entries);
 
             for (var i in entries) {
                 var e = entries[i];
@@ -390,11 +385,11 @@ var CodingJS = (function CodingJS() {
             return form;
         };
 
-        coding.makeMCQ = function (_mcq, right_entries, wrong_entries) {
-            coding.$_(_mcq).append(coding.makeForm(_mcq + "_form", right_entries, wrong_entries));
+        coding.make_MCQ = function (_mcq, right_entries, wrong_entries) {
+            coding.$_(_mcq).append(coding.make_form(_mcq + "_form", right_entries, wrong_entries));
 
             coding.$_(_mcq).append($("<div>", {'class': 'p-link', 'id': _mcq + "-submit", 'html': 'submit'}));
-            coding.addOutput(_mcq + "-submit");
+            coding.add_output(_mcq + "-submit");
 
             coding.$_(_mcq + "-submit").click(function() {
 
@@ -413,7 +408,7 @@ var CodingJS = (function CodingJS() {
 
                 console.log(checked);
 
-                if (coding.arrayEq(checked,["right"]) && coding.arrayEq(unchecked,["wrong"])) {
+                if (coding.array_eq(checked,["right"]) && coding.array_eq(unchecked,["wrong"])) {
                     $out.empty().append($("<div class='submit-ans right-answer'> \u2713 </div>"));
                 } else {
                     $out.empty().append($("<div class='submit-ans wrong-answer'> \u2717 </div>"));
@@ -423,30 +418,9 @@ var CodingJS = (function CodingJS() {
         };
 
         ////////////////////////////////////////////////////////////////////////////////
-        coding.createTOC = function () {
-            $("h3, h4").each(function(i) {
 
-                var current = $(this);
-
-                var title = current.text().slice(0,50).replace(/^\s+/, "").replace(/\s+$/, "").replace(/:/, "").replace(/\s+/g, "-").replace(/\./g, "-").replace(/\-+/g, "-").replace(/[\(\)]/g, "").replace(/\?/, "").replace(/'/g, "");
-
-                current.attr("id", title);
-
-                var a = $("<a>", {href: "#" + title, html: current.text().slice(0,50), 'class': current[0].coding.nodeName.toLowerCase()});
-
-                a.click(function() {
-                    $('html, body').animate({
-                        'scrollTop':   $('#' + title).offset().top
-                    }, 250);
-                });
-
-                $("#toc").append(a).append($('<br>'));
-            });
-
-            $('#sidebox').animate({'right':'0%'});
-        };
         $(function () {
-            var todo = Object.keys(coding.editorOf);
+            var todo = Object.keys(coding.editor_of);
 
             (function proc() {
                 if (todo.length == 0) {
@@ -454,7 +428,7 @@ var CodingJS = (function CodingJS() {
                 }
                 try {
                     var first = todo.shift();
-                    coding.editorOf[first].getOption("onBlur")().then(proc);
+                    coding.editor_of[first].getOption("onBlur")().then(proc);
                 } catch (err) {
                     proc();
                 }

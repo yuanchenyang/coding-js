@@ -12,7 +12,7 @@
 <script src="deps/jquery.min.js"></script>
 <script src="coding.js"> </script>
 <script>
-  var c = new CodingJS("", "scheme");
+  var c = new CodingJS();
 </script>
 </head>
 <body>
@@ -49,7 +49,7 @@
 
 <h3> Including coding.js </h3>
 
-<p> To use coding.js on your own website, simply clone the <a href="https://github.com/yuanchenyang/web-worker-interpreter"> web-worker-interpreters</a> github project and include the coding.js file. We can create a <tt>CodingJS</tt> object, which by default to a scheme interpreter.
+<p> To use coding.js on your own website, simply clone the <a href="https://github.com/yuanchenyang/coding-js"> coding-js </a> github project and include the coding.js file. We can create a <tt>CodingJS</tt> object, which by default to a scheme interpreter.
 
 <pre style="margin-left: 3em">
 &lt;script src="coding.js"> &lt;/script&gt;
@@ -200,19 +200,19 @@ c.frozen_prompt("scheme-square-x", ["scheme-define-x-10"]);
 
 <h3> Internals </h3>
 
-<p> This example demonstrates using some internal functions. <tt>makeEditable</tt> causes a div to be converted into a CodeMirror editor instance, preloaded with the code it contained.
+<p> This example demonstrates using some internal functions. <tt>make_editable</tt> causes a div to be converted into a CodeMirror editor instance, preloaded with the code it contained.
 <div id="scheme-number">
 486
 </div>
 <script>
-c.makeEditable("scheme-number");
+c.make_editable("scheme-number");
 </script>
 
 <p> the <tt>compute</tt> function calls a scheme (or language of your choice) interpreter, and in fact we can get all our functionality by binding it to the <tt>onBlur</tt> event listener that CodeMirror gives us.
 
 <div id="scheme-number-output" class="output"> </div>
 <script>
-c.editorOf["scheme-number"].setOption('onBlur', function() {
+c.editor_of["scheme-number"].setOption('onBlur', function() {
   return compute("scheme-number");
 });
 </script>

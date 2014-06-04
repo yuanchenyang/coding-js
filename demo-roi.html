@@ -45,7 +45,7 @@ div.two-up {
 }
 
 div.two-left {
-  width:50%; 
+  width:50%;
   float:left;
 }
 
@@ -71,14 +71,12 @@ div.CodeMirror {
 
 </style>
 
-<script src="deps/lib-xj.js"></script>
 <script src="deps/codemirror/lib/codemirror.js"></script>
 <script src="deps/codemirror/mode/scheme/scheme.js"></script>
 <script src="deps/jquery.min.js"></script>
 <script src="coding.js"> </script>
 <script>
-  set_interpreter_path("");
-  set_language("scheme");
+  c = CodingJS();
 </script>
 </head>
 <body>
@@ -119,11 +117,11 @@ Avg. Mile Per Gallon of vehicle driven to signing
 </td>
 </tr>
 </table>
-<p> 
+<p>
 <script>
-makeEditable("miles-per-document");
-makeEditable("cost-per-gallon");
-makeEditable("miles-per-gallon");
+c.makeEditable("miles-per-document");
+c.makeEditable("cost-per-gallon");
+c.makeEditable("miles-per-gallon");
 </script>
 
 <h3> Output </h3>
@@ -143,9 +141,9 @@ Avg. cost of gas per document delivered
 
 <script>
 function calculate_cost_per_document() {
-  var mpd = editorOf["miles-per-document"].getValue();
-  var cpg = editorOf["cost-per-gallon"].getValue();
-  var mpg = editorOf["miles-per-gallon"].getValue();
+  var mpd = c.editorOf["miles-per-document"].getValue();
+  var cpg = c.editorOf["cost-per-gallon"].getValue();
+  var mpg = c.editorOf["miles-per-gallon"].getValue();
 
   var ans = mpd * cpg / mpg;
   var ret = Math.floor(ans * 100 + 0.5)/100
@@ -153,9 +151,9 @@ function calculate_cost_per_document() {
   $("#cost-per-document").html(ret);
 }
 
-editorOf["miles-per-document"].setOption('onBlur', calculate_cost_per_document);
-editorOf["cost-per-gallon"].setOption('onBlur', calculate_cost_per_document);
-editorOf["miles-per-gallon"].setOption('onBlur', calculate_cost_per_document);
+c.editorOf["miles-per-document"].setOption('onBlur', calculate_cost_per_document);
+c.editorOf["cost-per-gallon"].setOption('onBlur', calculate_cost_per_document);
+c.editorOf["miles-per-gallon"].setOption('onBlur', calculate_cost_per_document);
 
 </script>
 
