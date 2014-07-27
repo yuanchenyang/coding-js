@@ -226,7 +226,7 @@ var CodingJS = (function CodingJS() {
             w.postMessage(coding.get_depended_on_code(s));
 
             for (var pushes = coding.get_pushes(s), i = 0; i < pushes.length; i++) {
-                coding.compute(pushes[i]);
+                coding.compute(pushes[i], language);
             }
             return def; //for template code to chain
         };
