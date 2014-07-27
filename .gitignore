@@ -12,3 +12,6 @@ __pycache__
 *.DS_Store
 *.swp
 *.out
+
+coding-everything.min.css
+coding-everything.min.js
