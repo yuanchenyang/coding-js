@@ -193,13 +193,15 @@ var CodingJS = (function CodingJS() {
             coding.$_(_e).after($('<div>', {'id': _e + "-output", 'class': "output"}));
         };
 
-        coding.compute = function (s) {
+        coding.compute = function (s, language) {
             var def = $.Deferred();
 
             var _output = s + "-output";
             var output_fragment = [];
 
-            var w = new Worker(coding.config.interpreter_path + "workers/" + coding.config.language + ".js");
+            language = language || coding.config.language;
+
+            var w = new Worker(coding.config.interpreter_path + "workers/" + language + ".js");
             w.onmessage = function(e) {
                 if (e.data.type === "end") {
                     if (output_fragment.length == 0) {
@@ -239,7 +241,7 @@ var CodingJS = (function CodingJS() {
 
             var def = $.Deferred();
 
-            var w = new Worker(coding.config.interpreter_path + "workers/" + coding.config.language + ".js");
+            var w = new Worker(coding.config.interpreter_path + "workers/scheme.js");
             var out = [];
             w.onmessage = function(e) {
                 if (e.data.type === "end") {
@@ -257,20 +259,20 @@ var CodingJS = (function CodingJS() {
             return def;
         };
 
-        coding.prompt = function (s, deps) {
+        coding.prompt = function (s, deps, lang) {
             coding.make_editable(s).setOption('onBlur', function() {
-                return coding.compute(s);
+                return coding.compute(s, lang);
             });
             coding.add_output(s);
             coding.add_dep(s, (deps || []));
 
         };
 
-        coding.frozen_prompt = function (s, deps) {
+        coding.frozen_prompt = function (s, deps, lang) {
             coding.make_editable(s);
             coding.editor_of[s].setOption("readOnly", 'coding.nocursor');
             coding.editor_of[s].setOption('onBlur', function() {
-                return coding.compute(s);
+                return coding.compute(s, lang);
             });
             coding.add_output(s);
             coding.add_dep(s, (deps || []));
