@@ -400,7 +400,7 @@ var CodingJS = (function CodingJS() {
                     checked.push(j.value);
                 });
 
-                coding.$_(_mcq + "_form").children("input:not(:checked)").each(function(i, j) {
+                coding.$_(_mcq + "_form").children(":not(input:checked)").each(function(i, j) {
                     unchecked.push(j.value);
                 });
 
