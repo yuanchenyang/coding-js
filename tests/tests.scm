@@ -999,3 +999,11 @@ s
 ; expect 1
 (let ((cadddr car)) (cadddr '(1 2 3 4)))
 ; expect 1
+
+;; Test length of lists
+(number? (length '(1 2 3)))
+; expect true
+(integer? (length '(1 2 3)))
+; expect true
+(<= (length '(1 2 3 4 5)) 1)
+; expect false

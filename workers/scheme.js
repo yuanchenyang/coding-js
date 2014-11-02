@@ -418,7 +418,7 @@ function do_or_form(vals, env) {
 function do_cond_form(vals, env) {
     // Evaluate cond form with parameters VALS in environment ENV
     var num_clauses = vals.length;
-    for (var i = 0; i < vals.length; i++) {
+    for (var i = 0; i < num_clauses; i++) {
     var clause = vals.getitem(i);
     check_form(clause, 1);
     if (clause.first === "else") {

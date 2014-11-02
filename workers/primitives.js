@@ -172,12 +172,12 @@ function scheme_stringp(x) {
 _PRIMITIVES["string?"] = new PrimitiveProcedure(scheme_stringp);
 
 function scheme_numberp(x) {
-    return typeof x === "number";
+    return typeof x.valueOf() === "number";
 }
 _PRIMITIVES["number?"] = new PrimitiveProcedure(scheme_numberp);
 
 function scheme_integerp(x) {
-    return (typeof x === "number") && Math.floor(x) === x;
+    return (typeof x.valueOf() === "number") && Math.floor(x) == x.valueOf();
 }
 _PRIMITIVES["integer?"] = new PrimitiveProcedure(scheme_integerp);
 
