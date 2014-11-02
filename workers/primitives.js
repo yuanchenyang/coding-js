@@ -108,15 +108,26 @@ function scheme_cdr(x) {
 }
 _PRIMITIVES["cdr"] = new PrimitiveProcedure(scheme_cdr);
 
-function scheme_cadr(x) {
-    return scheme_car(scheme_cdr(x));
+var _CXRS = ["caar", "cadr", "cdar", "cddr", "caaar", "caadr", "cadar", "caddr",
+             "cdaar", "cdadr", "cddar", "cdddr", "caaaar", "caaadr", "caadar",
+             "caaddr", "cadaar", "cadadr", "caddar", "cadddr", "cdaaar", "cdaadr",
+             "cdadar", "cdaddr", "cddaar", "cddadr", "cdddar", "cddddr"];
+function scheme_cxr(form) {
+    return function(exp) {
+        for (var i = form.length - 2; i > 0; i--) {
+            if (form[i] == 'a') {
+                exp = scheme_car(exp);
+            } else {
+                exp = scheme_cdr(exp);
+            }
+        }
+        return exp;
+    };
 }
-_PRIMITIVES["cadr"] = new PrimitiveProcedure(scheme_cadr);
 
-function scheme_caddr(x) {
-    return scheme_car(scheme_cdr(scheme_cdr(x)));
-}
-_PRIMITIVES["caddr"] = new PrimitiveProcedure(scheme_caddr);
+_CXRS.forEach(function(form) {
+    _PRIMITIVES[form] = new PrimitiveProcedure(scheme_cxr(form));
+});
 
 function scheme_list() {
     var result = nil;

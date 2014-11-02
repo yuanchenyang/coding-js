@@ -978,7 +978,7 @@ s
 (print "\a\b\c\d")
 ; expect abcd
 
-;; Tests for c[ad]{2,6}r:
+;; Tests for c[ad]{2,4}r:
 
 (cddddr '(1 2 3 4 5 6))
 ; expect (5 6)
@@ -991,3 +991,11 @@ s
 
 (cddr '(1 2 3 (4 5) 6))
 ; expect (3 (4 5) 6)
+
+;; Rebinding cxr primitives
+(let ((cadr car)) (cadr '(1 2 3 4)))
+; expect 1
+(let ((caddr car)) (caddr '(1 2 3 4)))
+; expect 1
+(let ((cadddr car)) (cadddr '(1 2 3 4)))
+; expect 1
