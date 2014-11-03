@@ -17,7 +17,8 @@ var CodingJS = (function CodingJS() {
         var coding = this;
 
         coding.config = {interpreter_path: interpreter_path || "",
-                         language: language || "scheme"};
+                         language: language || "scheme",
+                         timeout_ms: 30000}; // 30 seconds
         coding.set_interpreter_path = function(path) {
             coding.config.interpreter_path = path;
         };
@@ -196,16 +197,18 @@ var CodingJS = (function CodingJS() {
         coding.compute = function (s) {
             var def = $.Deferred();
 
-            var _output = s + "-output";
             var output_fragment = [];
+            var output = coding.$_(s + "-output");
+            var terminated = false;
 
             var w = new Worker(coding.config.interpreter_path + "workers/" + coding.config.language + ".js");
             w.onmessage = function(e) {
                 if (e.data.type === "end") {
                     if (output_fragment.length == 0) {
-                        coding.$_(_output).empty();
+                        output.empty();
                     }
                     w.terminate();
+                    terminated = true;
                     def.resolve();
                     return;
                 } else if (e.data.type === "displayed_text") {
@@ -218,10 +221,20 @@ var CodingJS = (function CodingJS() {
                 } else {
                     output_fragment.push($("<span>" + e.data + "<br> </span>"));
                 }
-                coding.$_(_output).empty().append(output_fragment);
+                output.empty().append(output_fragment);
             };
 
+            function timeout_fn() {
+                if (! terminated) {
+                    w.terminate();
+                    output_fragment.push(
+                        $("<span class='output_error'> Computation timed out! </span>"));
+                    output.empty().append(output_fragment);
+                }
+            }
+
             w.postMessage(coding.get_depended_on_code(s));
+            window.setTimeout(timeout_fn, coding.config.timeout_ms);
 
             for (var pushes = coding.get_pushes(s), i = 0; i < pushes.length; i++) {
                 coding.compute(pushes[i]);
