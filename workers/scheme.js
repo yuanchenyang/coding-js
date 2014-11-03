@@ -229,12 +229,16 @@ function scheme_apply(procedure, args, env) {
 
 function apply_primitive(procedure, args, env) {
     // Apply PrimitiveProcedure PROCEDURE to a Scheme list of ARGS in ENV
+    var fn = procedure.fn;
     args = pair_to_array(args);
     if (procedure.use_env) {
         args.push(env);
     }
-    // Primitive procedures throw their own errors with passed in with the
-    // incorrect number of arguments.
+    // Errors if expected arguments does not match
+    if (fn.length != args.length && ! procedure.varargs) {
+        throw "SchemeError: Expected " + fn.length +
+              " arguments, got " + args.length;
+    }
     return procedure.fn.apply(this, args);
 }
 

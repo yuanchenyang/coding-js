@@ -2,14 +2,11 @@
 
 // This file implements the primitives of the Scheme language
 
-function PrimitiveProcedure(fn, use_env) {
-    if (typeof use_env === "undefined") {
-        use_env = false;
-    }
+function PrimitiveProcedure(fn, use_env, varargs) {
     this.fn = fn;
-    this.use_env = use_env;
+    this.use_env = use_env || false;
+    this.varargs = varargs || false;
 }
-
 
 function check_type(val, predicate, k, name) {
     // Returns VAL.  Raises a SchemeError if not PREDICATE(VAL)
@@ -136,7 +133,7 @@ function scheme_list() {
     }
     return result;
 }
-_PRIMITIVES["list"] = new PrimitiveProcedure(scheme_list);
+_PRIMITIVES["list"] = new PrimitiveProcedure(scheme_list, false, true);
 function scheme_append() {
     if (arguments.length == 0) {
         return nil;
@@ -159,7 +156,7 @@ function scheme_append() {
     }
     return result;
 }
-_PRIMITIVES["append"] = new PrimitiveProcedure(scheme_append);
+_PRIMITIVES["append"] = new PrimitiveProcedure(scheme_append, false, true);
 
 function scheme_symbolp(x) {
     return typeof x === "string";
@@ -207,7 +204,7 @@ function _arith(fn, init, vals) {
 function scheme_add() {
     return _arith(function(a, b) {return a+b;}, 0, arguments);
 }
-_PRIMITIVES["+"] = new PrimitiveProcedure(scheme_add);
+_PRIMITIVES["+"] = new PrimitiveProcedure(scheme_add, false, true);
 
 function scheme_sub() {
     var args = Array.prototype.slice.call(arguments);
@@ -221,12 +218,12 @@ function scheme_sub() {
                       args.slice(1));
     }
 }
-_PRIMITIVES["-"] = new PrimitiveProcedure(scheme_sub);
+_PRIMITIVES["-"] = new PrimitiveProcedure(scheme_sub, false, true);
 
 function scheme_mul() {
     return _arith(function(a, b) {return a*b;}, 1, arguments);
 }
-_PRIMITIVES["*"] = new PrimitiveProcedure(scheme_mul);
+_PRIMITIVES["*"] = new PrimitiveProcedure(scheme_mul, false, true);
 
 function scheme_div(x, y) {
     if (y === 0) {
@@ -234,7 +231,7 @@ function scheme_div(x, y) {
     }
     return _arith(function(a, b) {return a/b;}, x, [y]);
 }
-_PRIMITIVES["/"] = new PrimitiveProcedure(scheme_div);
+_PRIMITIVES["/"] = new PrimitiveProcedure(scheme_div, false, true);
 
 function scheme_quotient(x, y) {
     var d = x/y;
@@ -355,7 +352,7 @@ function scheme_string_append() {
     }
     return s;
 }
-_PRIMITIVES["string-append"] = new PrimitiveProcedure(scheme_string_append);
+_PRIMITIVES["string-append"] = new PrimitiveProcedure(scheme_string_append, false, true);
 
 function scheme_string_ref(s, k) {
     _check_strings([s]);
