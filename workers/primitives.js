@@ -8,6 +8,10 @@ function PrimitiveProcedure(fn, use_env, varargs) {
     this.varargs = varargs || false;
 }
 
+PrimitiveProcedure.prototype = {
+    toString : function() {return "PrimitiveProcedure";}
+};
+
 function check_type(val, predicate, k, name) {
     // Returns VAL.  Raises a SchemeError if not PREDICATE(VAL)
     // using "argument K of NAME" to describe the offending value
@@ -188,9 +192,10 @@ function _check_nums(vals) {
 }
 
 function _arith(fn, init, vals) {
-    // Perform the fn fneration on the number values of VALS, with INIT as
+    // Perform the fn function on the number values of VALS, with INIT as
     // the value when VALS is empty. Returns the result as a Scheme value
     _check_nums(vals);
+    _check_nums([init]);
     var s = init;
     for (var i = 0; i < vals.length; i++) {
         s = fn(s, vals[i]);
@@ -231,7 +236,7 @@ function scheme_div(x, y) {
     }
     return _arith(function(a, b) {return a/b;}, x, [y]);
 }
-_PRIMITIVES["/"] = new PrimitiveProcedure(scheme_div, false, true);
+_PRIMITIVES["/"] = new PrimitiveProcedure(scheme_div);
 
 function scheme_quotient(x, y) {
     var d = x/y;
