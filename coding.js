@@ -113,9 +113,14 @@ var CodingJS = (function CodingJS() {
                 'onFocus': function() {console.log("focus_callback" + _editor); coding.focus_callback(_editor);}
             });
 
-            editor.setOption('extraKeys', {'Ctrl-Enter': function() {
-                editor.getOption("onBlur")();
-            }});
+            editor.setOption('extraKeys', {
+              'Ctrl-Enter': function() {
+                  editor.getOption("onBlur")();
+              }, 
+              'Cmd-Enter': function () {
+                  editor.getOption("onBlur")();
+              }
+            });
 
             coding.editor_of[_editor] = editor;
             return editor;
