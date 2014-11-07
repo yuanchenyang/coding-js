@@ -1007,3 +1007,11 @@ s
 ; expect true
 (<= (length '(1 2 3 4 5)) 1)
 ; expect false
+(>= (length '(1 2 3 4 5)) 1)
+; expect true
+(< (length '(1 2 3 4 5)) 1)
+; expect false
+(> (length '(1 2 3 4 5)) 1)
+; expect true
+(= (length '(1 2 3)) 3)
+; expect true

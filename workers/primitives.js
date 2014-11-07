@@ -287,7 +287,7 @@ _PRIMITIVES["ceil"] = new PrimitiveProcedure(scheme_ceil);
 
 function scheme_eq(x, y) {
     _check_nums([x, y]);
-    return x === y;
+    return x.valueOf() === y.valueOf();
 }
 _PRIMITIVES["="] = new PrimitiveProcedure(scheme_eq);
 
