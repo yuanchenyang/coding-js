@@ -38,7 +38,11 @@ var CodingJS = (function CodingJS() {
 
         coding.$_ = function(s) {
             // lookup element with an id of 's'
-            var ret = $("[id={0}]".format(s).replace(/\?/, "\\\?"));
+            var lookup_str = "[id={0}]".format(s);
+            if (lookup_str === "[id={0}]") {
+                throw "no s provided";
+            }
+            var ret = $(lookup_str.replace(/\?/, "\\\?"));
             if (!ret[0]) {
                 throw "#" + s + " did coding.not match anything";
             } else {
@@ -80,8 +84,8 @@ var CodingJS = (function CodingJS() {
         coding.get_depended_on_code = function (_editor) {
             var code = "";
 
-            for (var deps = coding.get_deps(_editor), i = 0; i < deps.length; i++) {
-                code += coding.get_depended_on_code(deps[i]);
+            for (var deps = coding.get_all_deps(_editor), i = 0; i < deps.length; i++) {
+                code += coding.editor_of[deps[i]].getValue();
             }
 
             return code + coding.editor_of[_editor].getValue();
@@ -103,6 +107,10 @@ var CodingJS = (function CodingJS() {
             }
 
             var $editor = coding.$_(_editor);
+            if (!$editor) {
+                console.log("_editor not found");
+                return;
+            }
             var code = coding.clean_code($editor.text());
 
             $editor.empty();
@@ -116,7 +124,7 @@ var CodingJS = (function CodingJS() {
             editor.setOption('extraKeys', {
               'Ctrl-Enter': function() {
                   editor.getOption("onBlur")();
-              }, 
+              },
               'Cmd-Enter': function () {
                   editor.getOption("onBlur")();
               }
@@ -137,21 +145,43 @@ var CodingJS = (function CodingJS() {
 
         ////////////////////////////////////////////////////////////////////////////////
 
-        coding.get_all_deps = function (s) {
+        coding.get_all_deps = function(editor_name) {
             var ret = [];
-            for (var i = 0, d = coding.get_deps(s); i < d.length; i++) {
-                ret = ret.concat(coding.get_all_deps(d[i]));
-                ret.push(d[i]);
+
+            var dfs = function(s) {
+                if (ret.indexOf(s) != -1) {
+                    return;
+                }
+                if (s != editor_name) {
+                    ret.push(s);
+                }
+                var d = coding.get_deps(s);
+                for (var i = 0; i < d.length; i++) {
+                    dfs(d[i]);
+                }
             }
+
+            dfs(editor_name);
             return ret;
         };
 
-        coding.get_all_pushes = function (s) {
+        coding.get_all_pushes = function(editor_name) {
             var ret = [];
-            for (var i = 0, d = coding.get_pushes(s); i < d.length; i++) {
-                ret.push(d[i]);
-                ret = ret.concat(coding.get_all_pushes(d[i]));
+
+            var dfs = function(s) {
+                if (ret.indexOf(s) != -1) {
+                    return;
+                }
+                if (s != editor_name) {
+                    ret.push(s);
+                }
+                var d = coding.get_pushes(s);
+                for (var i = 0; i < d.length; i++) {
+                    dfs(d[i]);
+                }
             }
+
+            dfs(editor_name);
             return ret;
         };
 
@@ -241,9 +271,6 @@ var CodingJS = (function CodingJS() {
             w.postMessage(coding.get_depended_on_code(s));
             window.setTimeout(timeout_fn, coding.config.timeout_ms);
 
-            for (var pushes = coding.get_pushes(s), i = 0; i < pushes.length; i++) {
-                coding.compute(pushes[i]);
-            }
             return def; //for template code to chain
         };
 
@@ -276,18 +303,25 @@ var CodingJS = (function CodingJS() {
         };
 
         coding.prompt = function (s, deps) {
+            if (!s) {
+                return;
+            }
             coding.make_editable(s).setOption('onBlur', function() {
+                for (var pushes = coding.get_all_pushes(s), i = 0; i < pushes.length; i++) {
+                    coding.compute(pushes[i]);
+                }
                 return coding.compute(s);
             });
             coding.add_output(s);
             coding.add_dep(s, (deps || []));
-
         };
 
         coding.frozen_prompt = function (s, deps) {
             coding.make_editable(s);
             coding.editor_of[s].setOption("readOnly", 'coding.nocursor');
             coding.editor_of[s].setOption('onBlur', function() {
+                // todo: I think this is only needed
+                // to run initial code. try to delete it.
                 return coding.compute(s);
             });
             coding.add_output(s);
