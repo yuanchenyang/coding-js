@@ -147,17 +147,19 @@ var CodingJS = (function CodingJS() {
 
         coding.get_all_deps = function(editor_name) {
             var ret = [];
+            var marked = [];
 
             var dfs = function(s) {
-                if (ret.indexOf(s) != -1) {
+                if (marked.indexOf(s) != -1) {
                     return;
                 }
-                if (s != editor_name) {
-                    ret.push(s);
-                }
+                marked.push(s);
                 var d = coding.get_deps(s);
                 for (var i = 0; i < d.length; i++) {
                     dfs(d[i]);
+                }
+                if (s != editor_name) {
+                    ret.push(s);
                 }
             }
 
@@ -296,7 +298,6 @@ var CodingJS = (function CodingJS() {
                 }
             };
 
-            console.log(code);
             w.postMessage(code);
 
             return def;
