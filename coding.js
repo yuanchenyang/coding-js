@@ -278,8 +278,8 @@ var CodingJS = (function CodingJS() {
 
         /*
          coding.eval_scheme(code).then(function(res) {
-         check if res is correct
-         update DOM
+            check if res is correct
+            update DOM
          });
          */
         coding.eval_scheme = function (code) {

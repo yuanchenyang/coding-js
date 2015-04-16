@@ -26,19 +26,17 @@ function switch_logic() {
 function test_file(filename, output) {
     // Load test cases from specified file
     $.get(filename, function (data) {
-        test(data, output);
+        var test_cases = split_cases(data);
+        test(test_cases, output);
     });
 }
 
-function test(test_specs, output) {
+function test(test_cases, output) {
     // Runs the test code in a single global environment.
 
-    var test_cases = split_cases(test_specs);
     var worker = create_worker();
     var eval_result = "";
     var code = "";
-
-    output.value += "Running Tests...\n";
 
     worker.onmessage = function(e) {
         if (e.data.type === "end") {
@@ -55,6 +53,9 @@ function test(test_specs, output) {
     };
 
     for (var i = 0; i < test_cases.length; i++) {
+        if (i > 0) {
+            code += '\n(display "TEST_HARNESS")\n';
+        }
         code += test_cases[i][0];
     }
 
@@ -65,16 +66,21 @@ function check_tests(test_cases, eval_result, out) {
     var code, result, curr_result, result_num_lines;
     var failed = 0;
     var total = test_cases.length;
-    var eval_lines = eval_result.split("\n");
+    var eval_lines = eval_result.split("TEST_HARNESS");
+
+    console.log(test_cases, eval_lines);
 
     for (var i = 0; i < test_cases.length; i++) {
         code = test_cases[i][0];
-        result = test_cases[i][1];
-        result_num_lines = result.split("\n").length - 1;
-        curr_result = eval_lines.slice(0, result_num_lines).join("\n") + "\n";
-        if ( curr_result !== result) {
+        expected = test_cases[i][1];
+
+        actual = eval_lines[i];
+
+        console.log([actual, expected]);
+
+        if (actual !== expected) {
             out.value +=  "\n################\n\nFAILED TEST:" + code +
-                "\nEXPECTED:\n" + result + "\n\GOT:\n" + curr_result;
+                "\nEXPECTED:\n" + expected + "\n\GOT:\n" + actual;
             failed += 1;
         }
         eval_lines = eval_lines.slice(result_num_lines);

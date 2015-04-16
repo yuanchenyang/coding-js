@@ -28,7 +28,10 @@ onmessage = function(event) {
         } catch(e) {
             var estring = e.toString() + '\n\nCurrent Eval Stack:\n' +
                 '-------------------------\n' + print_stack(env.stack);
-            this.postMessage({'type': 'error', 'value': estring});
+            this.postMessage({
+                'type': 'error',
+                'value': estring
+            });
         }
     }
     this.postMessage({'type': 'end'});
@@ -160,6 +163,7 @@ LambdaProcedure.prototype = {
 function scheme_eval(expr, env) {
     // Evaluate Scheme expression EXPR in environment ENV
     // This version of scheme_eval supports tail-call optimization
+
     env.stack.push(expr);
     var result;
     while (true) {
@@ -216,6 +220,7 @@ function scheme_eval(expr, env) {
 
 function scheme_apply(procedure, args, env) {
     // Apply Scheme PROCEDURE to argument values ARGS in environment ENV
+
     if (procedure instanceof PrimitiveProcedure) {
         return apply_primitive(procedure, args, env);
     } else if (procedure instanceof LambdaProcedure) {

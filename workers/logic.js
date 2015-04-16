@@ -151,6 +151,7 @@ var facts = [];
 
 function logic_eval(expr, env) {
     // Process an input expr, which may be a fact or query.
+
     if (! scheme_listp(expr)) {
         throw "Error: Expression must be a list: " + expr.toString();
     }
@@ -181,8 +182,10 @@ function logic_eval(expr, env) {
         if (! success) {
             logic_return("Failed.");
         }
+    } else if (expr.first === "display") {
+        logic_print(expr.second.first);
     } else {
-        throw "Error: Please provide a fact or query: "+ expr.toString();
+        throw "Error: Please! provide a fact or query: " + expr.first;
     }
 }
 

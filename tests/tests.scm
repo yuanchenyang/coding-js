@@ -18,8 +18,6 @@
 ;;;
 ;;; *** Add more of your own here! ***
 
-
-
 (begin (+ 2 3) (+ 5 6))
 ; expect 11
 
