@@ -206,8 +206,7 @@ function apply_cont(conts, val) {
                 expr = procedure.body;
                 env.stack.pop();
 
-                var ret = scheme_eval_k(procedure.body, env, []);
-                return apply_cont(conts.slice(1), ret);
+                return scheme_eval_k(procedure.body, env, conts.slice(1));
 
             } else if (procedure instanceof PrimitiveProcedure) {
                 cont.env.stack.pop();
