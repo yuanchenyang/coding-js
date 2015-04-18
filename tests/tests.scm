@@ -833,30 +833,30 @@ one-through-four
 ; expect true
 
 ; Tail call optimization test
-(define (sum n total)
-  (if (zero? n) total
-    (sum (- n 1) (+ n total))))
-(sum 1001 0)
-; expect 501501
+; (define (sum n total)
+;  (if (zero? n) total
+;    (sum (- n 1) (+ n total))))
+; (sum 1001 0)
+;;expect 501501
 
 ; display test
 (define (add n result)
   (if (= n 0)
       (begin (display "answer:") (display result))
-      (begin (if (= (modulo n 200) 0)
+      (begin (if (= (modulo n 2) 0)
                  (print n)
                  #t)
              (add (- n 1) (+ result n)))))
 
-(add 1000 0)
+(add 10 0)
 (newline)
 
-; expect 1000
-; expect 800
-; expect 600
-; expect 400
-; expect 200
-; expect answer:500500
+; expect 10
+; expect 8
+; expect 6
+; expect 4
+; expect 2
+; expect answer:55
 
 
 ;;; Tests for eval and apply primitives
