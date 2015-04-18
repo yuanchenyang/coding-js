@@ -161,60 +161,77 @@ LambdaProcedure.prototype = {
 /////////////////////
 
 function scheme_eval(expr, env) {
+    return scheme_eval_k(expr, env, []);
+}
+
+function scheme_eval_k(expr, env, conts) {
     // Evaluate Scheme expression EXPR in environment ENV
-    // This version of scheme_eval supports tail-call optimization
+    // After that, apply the continuation CONTS
 
     env.stack.push(expr);
     var result;
-    while (true) {
-        if (expr === null) {
-            throw 'SchemeError: Cannot evaluate an undefined expression.';
-        }
-        // Evaluate Atoms
-        if (scheme_symbolp(expr)) {
-            result = env.lookup(expr); break;
-        } else if (scheme_atomp(expr)) {
-            result = expr; break;
-        }
-        if (! scheme_listp(expr)) {
-            throw "SchemeError: malformed list: " + expr.toString();
-        }
-        var first = expr.first;
-        var rest = expr.second;
 
-        if (first in LOGIC_FORMS) {
-            expr = LOGIC_FORMS[first](rest, env);
-        } else if (first === 'lambda') {
-            result = do_lambda_form(rest, env); break;
-        } else if (first === 'set!') {
-            result = do_sete_form(rest, env); break;
-        } else if (first === 'set-car!') {
-            result = do_set_care_form(rest, env); break;
-        } else if (first === 'set-cdr!') {
-            result = do_set_cdre_form(rest, env); break;
-        } else if (first === 'define') {
-            result = do_define_form(rest, env); break;
-        } else if (first === 'quote') {
-            result = do_quote_form(rest); break;
-        } else if (first === 'let') {
-            var l = do_let_form(rest, env);
-            expr = l[0];
-            env = l[1];
+    if (expr === null) {
+        throw 'SchemeError: Cannot evaluate an undefined expression.';
+    }
+    // Evaluate Atoms
+    if (scheme_symbolp(expr)) {
+        env.stack.pop();
+        return env.lookup(expr);
+    } else if (scheme_atomp(expr)) {
+        env.stack.pop();
+        return expr;
+    }
+    if (! scheme_listp(expr)) {
+        throw "SchemeError: malformed list: " + expr.toString();
+    }
+    var first = expr.first;
+    var rest = expr.second;
+
+    if (first in LOGIC_FORMS) {
+        expr = LOGIC_FORMS[first](rest, env);
+        env.stack.pop();
+        return scheme_eval_k(expr, env, conts);
+    } else if (first === 'lambda') {
+        env.stack.pop();
+        return do_lambda_form(rest, env);
+    } else if (first === 'set!') {
+        env.stack.pop();
+        return do_sete_form(rest, env);
+    } else if (first === 'set-car!') {
+        env.stack.pop();
+        return do_set_care_form(rest, env);
+    } else if (first === 'set-cdr!') {
+        env.stack.pop();
+        return do_set_cdre_form(rest, env);
+    } else if (first === 'define') {
+        env.stack.pop();
+        return do_define_form(rest, env);
+    } else if (first === 'quote') {
+        env.stack.pop();
+        return do_quote_form(rest);
+    } else if (first === 'let') {
+        var l = do_let_form(rest, env);
+        expr = l[0];
+        env = l[1];
+        env.stack.pop();
+        return scheme_eval_k(expr, env, conts);
+    } else {
+        var procedure = scheme_eval(first, env);
+        var args = rest.map(function(operand) {
+            return scheme_eval(operand, env);
+        });
+        if (procedure instanceof LambdaProcedure) {
+            env = procedure.env.make_call_frame(procedure.formals, args,
+                                                procedure.dotted);
+            expr = procedure.body;
+            env.stack.pop();
+            return scheme_eval_k(expr, env, conts);
         } else {
-            var procedure = scheme_eval(first, env);
-            var args = rest.map(function(operand) {
-                return scheme_eval(operand, env);
-            });
-            if (procedure instanceof LambdaProcedure) {
-                env = procedure.env.make_call_frame(procedure.formals, args,
-                                                    procedure.dotted);
-                expr = procedure.body;
-            } else {
-                result = scheme_apply(procedure, args, env); break;
-            }
+            env.stack.pop();
+            return scheme_apply(procedure, args, env);
         }
     }
-    env.stack.pop();
     return result;
 }
 
