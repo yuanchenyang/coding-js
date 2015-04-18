@@ -135,8 +135,18 @@ Frame.prototype = {
     }
 };
 
+function IfContinuation(consq, altnt, env) {
+    // continuation of checking the result
+    // and returning either CONSQ or ALTNT
+
+    this.consq = consq;
+    this.altnt = altnt;
+    this.env = env;
+
+}
+
 function AppContinuation(args, pos, env) {
-    // represents the continuation of applying the result
+    // continuation of applying the result
     // to args where pos arguments have already been evaluated
 
     this.args = args;
@@ -199,7 +209,6 @@ function apply_cont(conts, val) {
             var args = cont.args;
             var procedure = cont.f;
 
-
             if (procedure instanceof LambdaProcedure) {
                 env = procedure.env.make_call_frame(procedure.formals, args,
                                                     procedure.dotted);
@@ -217,6 +226,17 @@ function apply_cont(conts, val) {
             }
 
 
+        }
+    } else if (cont instanceof IfContinuation) {
+
+        var pred = val;
+
+        cont.env.stack.pop();
+
+        if (scheme_true(pred)) {
+            return scheme_eval_k(cont.consq, cont.env, conts.slice(1));
+        } else {
+            return scheme_eval_k(cont.altnt, cont.env, conts.slice(1));
         }
     }
     return val;
@@ -250,7 +270,10 @@ function scheme_eval_k(expr, env, conts) {
     var first = expr.first;
     var rest = expr.second;
 
-    if (first in LOGIC_FORMS) {
+    if (first === 'if') {
+        return do_if_form(rest, env, conts);
+    }
+    else if (first in LOGIC_FORMS) {
         expr = LOGIC_FORMS[first](rest, env);
         env.stack.pop();
         return scheme_eval_k(expr, env, conts);
@@ -457,17 +480,12 @@ function do_let_form(vals, env) {
 // Logic Forms //
 /////////////////
 
-function do_if_form(vals, env) {
+function do_if_form(vals, env, conts) {
     // Evaluate if form with parameters VALS in environment ENV
     check_form(vals, 3, 3);
-    var pred = scheme_eval(vals.getitem(0), env);
-    var cons = vals.getitem(1);
-    var alt = vals.getitem(2);
-    if (scheme_true(pred)) {
-        return cons;
-    } else {
-        return alt;
-    }
+
+    var newcont = new IfContinuation(vals.getitem(1), vals.getitem(2), env);
+    return scheme_eval_k(vals.getitem(0), env, [newcont].concat(conts));
 }
 
 function do_and_form(vals, env) {
@@ -529,7 +547,6 @@ function do_begin_form(vals, env) {
 var LOGIC_FORMS = {
         "and": do_and_form,
         "or": do_or_form,
-        "if": do_if_form,
         "cond": do_cond_form,
         "begin": do_begin_form
         };
