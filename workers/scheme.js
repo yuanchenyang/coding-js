@@ -135,6 +135,15 @@ Frame.prototype = {
     }
 };
 
+function AppContinuation(args, pos, env) {
+    // represents the continuation of applying the result
+    // to args where pos arguments have already been evaluated
+
+    this.args = args;
+    this.pos = pos;
+    this.env = env;
+}
+
 // A procedure defined by a lambda expression or the complex define form
 function LambdaProcedure(formals, body, env, dotted) {
     // A procedure whose formal parameter list is FORMALS (a Scheme list or a
@@ -160,6 +169,44 @@ LambdaProcedure.prototype = {
 // Eval-Apply Loop //
 /////////////////////
 
+function apply_cont(conts, val) {
+
+    if (conts.length === 0) {
+        return val;
+    }
+
+    var cont = conts[0];
+    if (cont instanceof AppContinuation) {
+
+        // args is a scheme list
+        // console.log(cont.args.toString());
+
+        var args = cont.args.map(function(operand) {
+            return scheme_eval_k(operand, cont.env, []);
+        });
+
+        var procedure = val;
+
+        if (procedure instanceof LambdaProcedure) {
+            env = procedure.env.make_call_frame(procedure.formals, args,
+                                                procedure.dotted);
+            expr = procedure.body;
+            env.stack.pop();
+
+            var ret = scheme_eval_k(expr, env, conts.slice(1));
+
+            return ret;
+        } else if (procedure instanceof PrimitiveProcedure) {
+            cont.env.stack.pop();
+            return apply_primitive(procedure, args, cont.env);
+        } else {
+            throw "SchemeError: Cannot call " + procedure.toString();
+        }
+
+    }
+    return val;
+}
+
 function scheme_eval(expr, env) {
     return scheme_eval_k(expr, env, []);
 }
@@ -177,10 +224,10 @@ function scheme_eval_k(expr, env, conts) {
     // Evaluate Atoms
     if (scheme_symbolp(expr)) {
         env.stack.pop();
-        return env.lookup(expr);
+        return apply_cont(conts, env.lookup(expr));
     } else if (scheme_atomp(expr)) {
         env.stack.pop();
-        return expr;
+        return apply_cont(conts, expr);
     }
     if (! scheme_listp(expr)) {
         throw "SchemeError: malformed list: " + expr.toString();
@@ -194,7 +241,8 @@ function scheme_eval_k(expr, env, conts) {
         return scheme_eval_k(expr, env, conts);
     } else if (first === 'lambda') {
         env.stack.pop();
-        return do_lambda_form(rest, env);
+        res = do_lambda_form(rest, env);
+        return apply_cont(conts, res);
     } else if (first === 'set!') {
         env.stack.pop();
         return do_sete_form(rest, env);
@@ -217,20 +265,8 @@ function scheme_eval_k(expr, env, conts) {
         env.stack.pop();
         return scheme_eval_k(expr, env, conts);
     } else {
-        var procedure = scheme_eval(first, env);
-        var args = rest.map(function(operand) {
-            return scheme_eval(operand, env);
-        });
-        if (procedure instanceof LambdaProcedure) {
-            env = procedure.env.make_call_frame(procedure.formals, args,
-                                                procedure.dotted);
-            expr = procedure.body;
-            env.stack.pop();
-            return scheme_eval_k(expr, env, conts);
-        } else {
-            env.stack.pop();
-            return scheme_apply(procedure, args, env);
-        }
+        var new_cont = new AppContinuation(rest, 0, env);
+        return scheme_eval_k(first, env, [new_cont].concat(conts));
     }
     return result;
 }

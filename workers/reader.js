@@ -75,6 +75,21 @@ Pair.prototype = {
         }
         return y.first;
     },
+    setitem : function(k, v) {
+        if (k < 0) {
+            throw "IndexError: negative index into list";
+        }
+        var y = this;
+        for (var i = 0; i < k; i++) {
+            if (y.second === nil) {
+                throw "IndexError: list out of bounds";
+            } else if (! (y.second instanceof Pair)) {
+                throw "TypeError: ill-formed list";
+            }
+            y = y.second;
+        }
+        y.first = v;
+    },
     seperate_dotted : function() {
         // Returns an array; its first element is a well-formed list
         // without the last element of the dotted list; its second element
