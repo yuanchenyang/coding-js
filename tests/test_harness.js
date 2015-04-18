@@ -68,15 +68,11 @@ function check_tests(test_cases, eval_result, out) {
     var total = test_cases.length;
     var eval_lines = eval_result.split("TEST_HARNESS");
 
-    console.log(test_cases, eval_lines);
-
     for (var i = 0; i < test_cases.length; i++) {
         code = test_cases[i][0];
         expected = test_cases[i][1];
 
         actual = eval_lines[i];
-
-        console.log([actual, expected]);
 
         if (actual !== expected) {
             out.value +=  "\n################\n\nFAILED TEST:" + code +
