@@ -180,29 +180,45 @@ function apply_cont(conts, val) {
 
         // args is a scheme list
         // console.log(cont.args.toString());
+        // console.log(val, cont.pos, cont.args.toString());
 
-        var args = cont.args.map(function(operand) {
-            return scheme_eval_k(operand, cont.env, []);
-        });
-
-        var procedure = val;
-
-        if (procedure instanceof LambdaProcedure) {
-            env = procedure.env.make_call_frame(procedure.formals, args,
-                                                procedure.dotted);
-            expr = procedure.body;
-            env.stack.pop();
-
-            var ret = scheme_eval_k(expr, env, conts.slice(1));
-
-            return ret;
-        } else if (procedure instanceof PrimitiveProcedure) {
-            cont.env.stack.pop();
-            return apply_primitive(procedure, args, cont.env);
+        if (cont.pos !== -1) {
+            cont.args.setitem(cont.pos, val);
         } else {
-            throw "SchemeError: Cannot call " + procedure.toString();
+            cont.f = val;
         }
 
+        if (cont.pos == -1 && cont.args.length > 0) {
+            cont.pos++;
+            return scheme_eval_k(cont.args.getitem(cont.pos), cont.env, conts);
+        } else if (cont.pos < cont.args.length - 1) {
+            cont.pos++;
+            return scheme_eval_k(cont.args.getitem(cont.pos), cont.env, conts);
+        } else {
+
+            var args = cont.args;
+            var procedure = cont.f;
+
+
+            if (procedure instanceof LambdaProcedure) {
+                env = procedure.env.make_call_frame(procedure.formals, args,
+                                                    procedure.dotted);
+                expr = procedure.body;
+                env.stack.pop();
+
+                var ret = scheme_eval_k(procedure.body, env, []);
+                return apply_cont(conts.slice(1), ret);
+
+            } else if (procedure instanceof PrimitiveProcedure) {
+                cont.env.stack.pop();
+                return apply_cont(conts.slice(1),
+                    apply_primitive(procedure, args, cont.env));
+            } else {
+                throw "SchemeError: Cannot call " + procedure.toString();
+            }
+
+
+        }
     }
     return val;
 }
@@ -257,7 +273,7 @@ function scheme_eval_k(expr, env, conts) {
         return do_define_form(rest, env);
     } else if (first === 'quote') {
         env.stack.pop();
-        return do_quote_form(rest);
+        return apply_cont(conts, do_quote_form(rest));
     } else if (first === 'let') {
         var l = do_let_form(rest, env);
         expr = l[0];
@@ -265,7 +281,7 @@ function scheme_eval_k(expr, env, conts) {
         env.stack.pop();
         return scheme_eval_k(expr, env, conts);
     } else {
-        var new_cont = new AppContinuation(rest, 0, env);
+        var new_cont = new AppContinuation(rest.copy(), -1, env);
         return scheme_eval_k(first, env, [new_cont].concat(conts));
     }
     return result;

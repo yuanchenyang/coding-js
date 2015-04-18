@@ -75,6 +75,9 @@ Pair.prototype = {
         }
         return y.first;
     },
+    copy : function(k, v) {
+        return this.map(function(x) {return x});
+    },
     setitem : function(k, v) {
         if (k < 0) {
             throw "IndexError: negative index into list";
@@ -132,6 +135,9 @@ var nil = {
     },
     map : function(fn) {
         return this;
+    },
+    copy : function(fn) {
+        return this.map(function(x) {return x});
     }
 };
 
