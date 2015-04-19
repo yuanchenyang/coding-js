@@ -241,7 +241,6 @@ function apply_cont(conts, val) {
             }
         }
     } else if (cont instanceof IfContinuation) {
-
         var pred = val;
 
         cont.env.stack.pop();
@@ -271,8 +270,9 @@ function apply_cont(conts, val) {
                 + " is not a variable";
         }
 
-        return apply_cont(conts.slice(1), undefined);
+        cont.env.stack.pop();
 
+        return apply_cont(conts.slice(1), undefined);
     }
 
     // return val;
@@ -321,7 +321,6 @@ function scheme_eval_k(expr, env, conts) {
         res = do_lambda_form(rest, env);
         return apply_cont(conts, res);
     } else if (first === 'set!') {
-        env.stack.pop();
         return do_sete_form(rest, env, conts);
     } else if (first === 'set-car!') {
         env.stack.pop();
@@ -429,14 +428,6 @@ function do_sete_form(vals, env, conts) {
 
     var newcont = new SetContinuation(target, env);
     return scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
-
-    // value = scheme_eval(vals.getitem(1), env);
-    // if (scheme_symbolp(target)) {
-    //     env.sete(target, value);
-    // } else {
-    //     throw "SchemeError: cannot set!: " + target.toString()
-    //         + " is not a variable";
-    // }
 }
 
 function do_set_care_form(vals, env) {
@@ -445,9 +436,7 @@ function do_set_care_form(vals, env) {
     check_form(vals, 2, 2);
 
     target = vals.getitem(0);
-    value = scheme_eval(vals.getitem(1), env);
-
-    scheme_eval(target, env).first = value;
+    scheme_eval(target, env).first = scheme_eval(vals.getitem(1), env);
 }
 
 function do_set_cdre_form(vals, env) {
@@ -456,9 +445,7 @@ function do_set_cdre_form(vals, env) {
     check_form(vals, 2, 2);
 
     target = vals.getitem(0);
-    value = scheme_eval(vals.getitem(1), env);
-
-    scheme_eval(target, env).second = value;
+    scheme_eval(target, env).second = scheme_eval(vals.getitem(1), env);
 }
 
 function do_define_form(vals, env) {
