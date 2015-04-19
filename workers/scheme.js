@@ -142,6 +142,16 @@ function SetContinuation(target, env) {
     this.env = env;
 }
 
+function SetCarContinuation(rval, env) {
+    this.rval = rval;
+    this.env = env;
+}
+
+function SetCdrContinuation(rval, env) {
+    this.rval = rval;
+    this.env = env;
+}
+
 function IfContinuation(consq, altnt, env) {
     // continuation of checking the result
     // and returning either CONSQ or ALTNT
@@ -271,8 +281,26 @@ function apply_cont(conts, val) {
         }
 
         cont.env.stack.pop();
-
         return apply_cont(conts.slice(1), undefined);
+
+    } else if (cont instanceof SetCarContinuation) {
+
+        if (cont.target) {
+            cont.target.first = val;
+            return apply_cont(conts.slice(1), undefined);
+        } else {
+            cont.target = val;
+            return scheme_eval_k(cont.rval, cont.env, conts);
+        }
+    } else if (cont instanceof SetCdrContinuation) {
+
+        if (cont.target) {
+            cont.target.second = val;
+            return apply_cont(conts.slice(1), undefined);
+        } else {
+            cont.target = val;
+            return scheme_eval_k(cont.rval, cont.env, conts);
+        }
     }
 
     // return val;
@@ -323,11 +351,9 @@ function scheme_eval_k(expr, env, conts) {
     } else if (first === 'set!') {
         return do_sete_form(rest, env, conts);
     } else if (first === 'set-car!') {
-        env.stack.pop();
-        return do_set_care_form(rest, env);
+        return do_set_care_form(rest, env, conts);
     } else if (first === 'set-cdr!') {
-        env.stack.pop();
-        return do_set_cdre_form(rest, env);
+        return do_set_cdre_form(rest, env, conts);
     } else if (first === 'define') {
         env.stack.pop();
         return do_define_form(rest, env);
@@ -430,22 +456,26 @@ function do_sete_form(vals, env, conts) {
     return scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
 }
 
-function do_set_care_form(vals, env) {
+function do_set_care_form(vals, env, conts) {
     // Evaluate a set-car! form with parameters VALS in environment ENV
     var target, value;
     check_form(vals, 2, 2);
 
     target = vals.getitem(0);
-    scheme_eval(target, env).first = scheme_eval(vals.getitem(1), env);
+
+    var newcont = new SetCarContinuation(vals.getitem(1), env);
+    return scheme_eval_k(target, env, [newcont].concat(conts));
 }
 
-function do_set_cdre_form(vals, env) {
+function do_set_cdre_form(vals, env, conts) {
     // Evaluate a set-cdr! form with parameters VALS in environment ENV
     var target, value;
     check_form(vals, 2, 2);
 
     target = vals.getitem(0);
-    scheme_eval(target, env).second = scheme_eval(vals.getitem(1), env);
+
+    var newcont = new SetCdrContinuation(vals.getitem(1), env);
+    return scheme_eval_k(target, env, [newcont].concat(conts));
 }
 
 function do_define_form(vals, env) {
