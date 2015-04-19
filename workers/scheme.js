@@ -135,6 +135,13 @@ Frame.prototype = {
     }
 };
 
+function SetContinuation(target, env) {
+    // continuation of setting target to result
+
+    this.target = target;
+    this.env = env;
+}
+
 function IfContinuation(consq, altnt, env) {
     // continuation of checking the result
     // and returning either CONSQ or ALTNT
@@ -142,7 +149,13 @@ function IfContinuation(consq, altnt, env) {
     this.consq = consq;
     this.altnt = altnt;
     this.env = env;
+}
 
+function AndContinuation(args, env) {
+    // continuation of (and val ,@args)
+
+    this.args = args;
+    this.env = env;
 }
 
 function AppContinuation(args, pos, env) {
@@ -180,6 +193,8 @@ LambdaProcedure.prototype = {
 /////////////////////
 
 function apply_cont(conts, val) {
+
+    // console.log("apply", conts, val.toString());
 
     if (conts.length === 0) {
         return val;
@@ -224,8 +239,6 @@ function apply_cont(conts, val) {
             } else {
                 throw "SchemeError: Cannot call " + procedure.toString();
             }
-
-
         }
     } else if (cont instanceof IfContinuation) {
 
@@ -238,8 +251,31 @@ function apply_cont(conts, val) {
         } else {
             return scheme_eval_k(cont.altnt, cont.env, conts.slice(1));
         }
+    } else if (cont instanceof AndContinuation) {
+        if (scheme_false(val)) {
+            return apply_cont(conts.slice(1), false);
+        } else if (cont.args.length === 0) {
+            cont.env.stack.pop();
+            return apply_cont(conts.slice(1), val);
+        } else {
+            var newcont = new AndContinuation(cont.args.second, cont.env);
+            return scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1)));
+        }
+    } else if (cont instanceof SetContinuation) {
+
+        var target = cont.target;
+        if (scheme_symbolp(target)) {
+            cont.env.sete(target, val);
+        } else {
+            throw "SchemeError: cannot set!: " + target.toString()
+                + " is not a variable";
+        }
+
+        return apply_cont(conts.slice(1), undefined);
+
     }
-    return val;
+
+    // return val;
 }
 
 function scheme_eval(expr, env) {
@@ -249,6 +285,8 @@ function scheme_eval(expr, env) {
 function scheme_eval_k(expr, env, conts) {
     // Evaluate Scheme expression EXPR in environment ENV
     // After that, apply the continuation CONTS
+
+    // console.log("eval", expr.toString(), conts);
 
     env.stack.push(expr);
     var result;
@@ -272,8 +310,9 @@ function scheme_eval_k(expr, env, conts) {
 
     if (first === 'if') {
         return do_if_form(rest, env, conts);
-    }
-    else if (first in LOGIC_FORMS) {
+    } else if (first === 'and') {
+        return do_and_form(rest, env, conts);
+    } else if (first in LOGIC_FORMS) {
         expr = LOGIC_FORMS[first](rest, env);
         env.stack.pop();
         return scheme_eval_k(expr, env, conts);
@@ -283,7 +322,7 @@ function scheme_eval_k(expr, env, conts) {
         return apply_cont(conts, res);
     } else if (first === 'set!') {
         env.stack.pop();
-        return do_sete_form(rest, env);
+        return do_sete_form(rest, env, conts);
     } else if (first === 'set-car!') {
         env.stack.pop();
         return do_set_care_form(rest, env);
@@ -382,18 +421,22 @@ function do_lambda_form(vals, env) {
     return new LambdaProcedure(formals, value, env, dotted);
 }
 
-function do_sete_form(vals, env) {
+function do_sete_form(vals, env, conts) {
     // Evaluate a set! form with parameters VALS in environment ENV
     var target, value;
     check_form(vals, 2, 2);
     target = vals.getitem(0);
-    value = scheme_eval(vals.getitem(1), env);
-    if (scheme_symbolp(target)) {
-        env.sete(target, value);
-    } else {
-        throw "SchemeError: cannot set!: " + target.toString()
-            + " is not a variable";
-    }
+
+    var newcont = new SetContinuation(target, env);
+    return scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
+
+    // value = scheme_eval(vals.getitem(1), env);
+    // if (scheme_symbolp(target)) {
+    //     env.sete(target, value);
+    // } else {
+    //     throw "SchemeError: cannot set!: " + target.toString()
+    //         + " is not a variable";
+    // }
 }
 
 function do_set_care_form(vals, env) {
@@ -488,16 +531,14 @@ function do_if_form(vals, env, conts) {
     return scheme_eval_k(vals.getitem(0), env, [newcont].concat(conts));
 }
 
-function do_and_form(vals, env) {
+function do_and_form(vals, env, conts) {
     // Evaluate short-circuited and with parameters VALS in environment ENV
-    if (vals.length == 0) {return true;}
-
-    while (vals.second != nil) {
-        var pred = scheme_eval(vals.first, env);
-        if (scheme_false(pred)) {return false;}
-        vals = vals.second;
+    if (vals.length == 0) {
+        return apply_cont(conts, true);
     }
-    return vals.first;
+
+    var newcont = new AndContinuation(vals.second.copy(), env);
+    return scheme_eval_k(vals.first, env, [newcont].concat(conts));
 }
 
 function do_or_form(vals, env) {
@@ -545,7 +586,6 @@ function do_begin_form(vals, env) {
 }
 
 var LOGIC_FORMS = {
-        "and": do_and_form,
         "or": do_or_form,
         "cond": do_cond_form,
         "begin": do_begin_form
