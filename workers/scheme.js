@@ -369,16 +369,11 @@ function scheme_eval_k(expr, env, conts) {
         return do_and_form(rest, env, conts);
     } else if (first === 'or') {
         return do_or_form(rest, env, conts);
-    // ok
     } else if (first === 'begin') {
         return do_begin_form(rest, env, conts);
-    } else if (first === 'cond') {
-        expr = do_cond_form(rest, env);
-        env.stack.pop();
-        return scheme_eval_k(expr, env, conts);
     } else if (first === 'lambda') {
         env.stack.pop();
-        res = do_lambda_form(rest, env);
+        res = make_lambda(rest, env);
         return apply_cont(conts, res);
     } else if (first === 'set!') {
         return do_sete_form(rest, env, conts);
@@ -386,9 +381,14 @@ function scheme_eval_k(expr, env, conts) {
         return do_set_care_form(rest, env, conts);
     } else if (first === 'set-cdr!') {
         return do_set_cdre_form(rest, env, conts);
+    // ok
     } else if (first === 'define') {
         env.stack.pop();
         return do_define_form(rest, env, conts);
+    } else if (first === 'cond') {
+        expr = do_cond_form(rest, env);
+        env.stack.pop();
+        return scheme_eval_k(expr, env, conts);
     } else if (first === 'quote') {
         env.stack.pop();
         return apply_cont(conts, do_quote_form(rest));
@@ -464,10 +464,9 @@ function array_to_pair(array) {
 // Special Forms //
 ///////////////////
 
-function do_lambda_form(vals, env) {
+function make_lambda(vals, env) {
     // Evaluate a lambda form with parameters VALS in environment ENV
     var value, formals;
-    check_form(vals, 2);
     formals = vals.getitem(0);
     var dotted = check_formals(formals);
     if (vals.length == 2) {
@@ -526,7 +525,7 @@ function do_define_form(vals, env, conts) {
             throw "SchemeError: not a variable: " + t.toString();
         }
         v = new Pair(vals.first.second, vals.second);
-        value = do_lambda_form(v, env);
+        value = make_lambda(v, env);
         env.define(t, value);
         return apply_cont(conts, undefined);
     } else {
