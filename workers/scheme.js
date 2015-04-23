@@ -283,7 +283,6 @@ function apply_cont(conts, val) {
             var newcont = new OrContinuation(cont.args.second, cont.env);
             return scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1)));
         }
-
     } else if (cont instanceof SetContinuation) {
 
         var target = cont.target;
@@ -568,22 +567,14 @@ function do_if_form(vals, env, conts) {
 
 function do_and_form(vals, env, conts) {
     // Evaluate short-circuited and with parameters VALS in environment ENV
-    if (vals.length === 0) {
-        return apply_cont(conts, true);
-    }
-
-    var newcont = new AndContinuation(vals.second.copy(), env);
-    return scheme_eval_k(vals.first, env, [newcont].concat(conts));
+    var newcont = new AndContinuation(vals.copy(), env);
+    return scheme_eval_k(true, env, [newcont].concat(conts));
 }
 
-function do_or_form(vals, env) {
+function do_or_form(vals, env, conts) {
     // Evaluate short-circuited or with parameters VALS in environment ENV
-    if (vals.length === 0) {
-        return apply_cont(conts, false);
-    }
-
-    var newcont = new OrContinuation(vals.second.copy(), env);
-    return scheme_eval_k(vals.first, env, [newcont].concat(conts));
+    var newcont = new OrContinuation(vals.copy(), env);
+    return scheme_eval_k(false, env, [newcont].concat(conts));
 }
 
 function do_cond_form(vals, env) {
