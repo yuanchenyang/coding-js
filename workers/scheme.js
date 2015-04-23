@@ -269,7 +269,6 @@ function apply_cont(conts, val) {
         if (scheme_false(val)) {
             return apply_cont(conts.slice(1), false);
         } else if (cont.args.length === 0) {
-            cont.env.stack.pop();
             return apply_cont(conts.slice(1), val);
         } else {
             var newcont = new AndContinuation(cont.args.second, cont.env);
@@ -279,7 +278,6 @@ function apply_cont(conts, val) {
         if (!scheme_false(val)) {
             return apply_cont(conts.slice(1), val);
         } else if (cont.args.length === 0) {
-            cont.env.stack.pop();
             return apply_cont(conts.slice(1), false);
         } else {
             var newcont = new OrContinuation(cont.args.second, cont.env);
