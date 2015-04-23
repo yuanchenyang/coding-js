@@ -354,11 +354,15 @@ function scheme_eval_k(expr, env, conts) {
         return do_if_form(rest, env, conts);
     } else if (first === 'and') {
         return do_and_form(rest, env, conts);
-    // ok
     } else if (first === 'or') {
         return do_or_form(rest, env, conts);
-    } else if (first in LOGIC_FORMS) {
-        expr = LOGIC_FORMS[first](rest, env);
+    // ok
+    } else if (first === 'cond') {
+        expr = do_cond_form(rest, env);
+        env.stack.pop();
+        return scheme_eval_k(expr, env, conts);
+    } else if (first === 'begin') {
+        expr = do_begin_form(rest, env);
         env.stack.pop();
         return scheme_eval_k(expr, env, conts);
     } else if (first === 'lambda') {
@@ -610,12 +614,6 @@ function do_begin_form(vals, env) {
     }
     return vals.getitem(eval_length);
 }
-
-var LOGIC_FORMS = {
-        "or": do_or_form,
-        "cond": do_cond_form,
-        "begin": do_begin_form
-        };
 
 //////////////////////
 // Helper Functions //
