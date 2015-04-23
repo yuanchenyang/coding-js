@@ -580,7 +580,6 @@ function do_quote_form(vals, env, conts) {
 function do_let_form(vals, env) {
     // Evaluate a let form with parameters VALS in environment ENV
 
-
     check_form(vals, 2);
     var bindings = vals.getitem(0);
     if (! scheme_listp(bindings)) {
@@ -600,7 +599,6 @@ function do_let_form(vals, env) {
     var new_env = env.make_call_frame(nil, nil);
     for (var i = 0; i < bindings.length; i++) {
         var binding = bindings.getitem(i);
-        check_form(binding, 2, 2);
         var name = binding.getitem(0);
         var value = scheme_eval(binding.getitem(1), env);
         new_env.define(name, value);

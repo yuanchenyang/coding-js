@@ -99,7 +99,7 @@ function split_cases(code) {
 
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
-        var result_line = (line.slice(0, 9) === "; expect ");
+        var result_line = (line.slice(0, 8) === "; expect");
 
         if (reading_result && (! result_line)) {
             test_cases.push([code_b, result_b]);

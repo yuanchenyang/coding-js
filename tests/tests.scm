@@ -21,12 +21,6 @@
 1
 ; expect 1
 
-;; Dynamic vs lexical
-(let ((a 1))
-     (let ((f (lambda () (print a))))
-       (let ((a 2))
-         (f))))
-; expect 1
 
 (begin (+ 2 3) (+ 5 6))
 ; expect 11
@@ -150,9 +144,22 @@
 
 (let ((x 5))
   (let ((x 2)
-	(y x))
+        (y x))
     y))
 ; expect 5
+
+;; Dynamic vs lexical
+(let ((a 1))
+     (let ((f (lambda () (print a))))
+       (let ((a 2))
+         (f))))
+; expect 1
+
+;; No escape
+;; Should produce error, not sure how to test
+;; (let ((x 1))
+;;    x)
+;; x
 
 ;;; These are examples from several sections of "The Structure
 ;;; and Interpretation of Computer Programs" by Abelson and Sussman.
