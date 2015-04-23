@@ -612,25 +612,33 @@ function do_or_form(vals, env, conts) {
 
 function do_cond_form(vals, env) {
     // Evaluate cond form with parameters VALS in environment ENV
-    var num_clauses = vals.length;
-    for (var i = 0; i < num_clauses; i++) {
-    var clause = vals.getitem(i);
-    check_form(clause, 1);
-    if (clause.first === "else") {
-        if (i < num_clauses - 1) {
-            throw "SchemeError: else must be last";
+
+    for (var i = 0; i < vals.length; i++) {
+        var clause = vals.getitem(i);
+        check_form(clause, 1);
+
+        if (clause.first === "else") {
+            if (i < vals.length - 1) {
+                throw "SchemeError: else must be last";
+            }
+            if (clause.second === nil) {
+                throw "SchemeError: badly formed else clause";
+            }
         }
-        var test = true;
-        if (clause.second === nil) {
-            throw "SchemeError: badly formed else clause";
+    }
+
+    var test;
+    for (var i = 0; i < vals.length; i++) {
+        var clause = vals.getitem(i);
+        if (clause.first === "else") {
+            test = true;
+        } else {
+            test = scheme_eval(clause.first, env);
         }
-    } else {
-        test = scheme_eval(clause.first, env);
-    }
-    if (scheme_true(test)) {
-        if (clause.second.length == 0) {return test;}
-        return new Pair('begin', clause.second);
-    }
+        if (scheme_true(test)) {
+            if (clause.second.length == 0) {return test;}
+            return new Pair('begin', clause.second);
+        }
     }
     return null;
 }
