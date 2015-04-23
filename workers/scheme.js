@@ -426,9 +426,9 @@ function scheme_eval_k(expr, env, conts) {
     } else if (first === 'define') {
         env.stack.pop();
         return do_define_form(rest, env, conts);
-    // ok
     } else if (first === 'cond') {
         return do_cond_form(rest, env, conts);
+    // ok
     } else if (first === 'let') {
         var l = do_let_form(rest, env);
         expr = l[0];
@@ -579,22 +579,28 @@ function do_quote_form(vals, env, conts) {
 
 function do_let_form(vals, env) {
     // Evaluate a let form with parameters VALS in environment ENV
+
+
     check_form(vals, 2);
     var bindings = vals.getitem(0);
-    var exprs = vals.second;
     if (! scheme_listp(bindings)) {
         throw "SchemeError: bad bindings list in let form";
     }
-    // Add a frame containing bindings
-    var names = nil;
-    vals = nil;
-    var new_env = env.make_call_frame(names, vals);
     for (var i = 0; i < bindings.length; i++) {
         var binding = bindings.getitem(i);
         check_form(binding, 2, 2);
         if (! scheme_symbolp(binding.getitem(0))) {
             throw "SchemeError: bad binding: " + binding.toString();
         }
+    }
+
+    var bindings = vals.getitem(0);
+    var exprs = vals.second;
+    // Add a frame containing bindings
+    var new_env = env.make_call_frame(nil, nil);
+    for (var i = 0; i < bindings.length; i++) {
+        var binding = bindings.getitem(i);
+        check_form(binding, 2, 2);
         var name = binding.getitem(0);
         var value = scheme_eval(binding.getitem(1), env);
         new_env.define(name, value);

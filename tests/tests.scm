@@ -18,6 +18,16 @@
 ;;;
 ;;; *** Add more of your own here! ***
 
+1
+; expect 1
+
+;; Dynamic vs lexical
+(let ((a 1))
+     (let ((f (lambda () (print a))))
+       (let ((a 2))
+         (f))))
+; expect 1
+
 (begin (+ 2 3) (+ 5 6))
 ; expect 11
 
