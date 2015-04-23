@@ -179,6 +179,19 @@ function CondContinuation(consq, clauses, env) {
     this.env = env;
 }
 
+function LetContinuation(target, bindings, new_env, env, expr) {
+    // (let ((target val)
+    //        ,@bindings)
+    //    expr)
+
+    this.target = target;
+    this.bindings = bindings;
+    this.new_env = new_env;
+    this.env = env;
+    this.expr = expr;
+
+}
+
 function IfContinuation(consq, altnt, env) {
     // (if val consq altnt)
 
@@ -369,6 +382,18 @@ function apply_cont(conts, val) {
             return scheme_eval_k(cont.clauses.getitem(0).first, cont.env, [newcont].concat(conts.slice(1)));
         }
 
+    } else if (cont instanceof LetContinuation) {
+
+        cont.new_env.define(cont.target, val);
+
+        if (cont.bindings.length === 0) {
+            return scheme_eval_k(cont.expr, cont.new_env, conts.slice(1));
+        } else {
+            var first_binding = cont.bindings.getitem(0);
+            var newcont = new LetContinuation(first_binding.getitem(0), cont.bindings.second, cont.new_env, env, cont.expr);
+            return scheme_eval_k(first_binding.getitem(1), cont.env, [newcont].concat(conts.slice(1)));
+        }
+
     }
 
     // return val;
@@ -429,7 +454,6 @@ function scheme_eval_k(expr, env, conts) {
         return do_define_form(rest, env, conts);
     } else if (first === 'cond') {
         return do_cond_form(rest, env, conts);
-    // ok
     } else if (first === 'let') {
         return do_let_form(rest, env, conts);
     } else {
@@ -592,18 +616,17 @@ function do_let_form(vals, env, conts) {
 
     var bindings = vals.getitem(0);
     var exprs = vals.second;
+    var expr = new Pair('begin', exprs);
 
-    // Add a frame containing bindings
     var new_env = env.make_call_frame(nil, nil);
-    for (var i = 0; i < bindings.length; i++) {
-        var binding = bindings.getitem(i);
-        var name = binding.getitem(0);
-        var value = scheme_eval(binding.getitem(1), env);
-        new_env.define(name, value);
-    }
 
-    var ret = new Pair('begin', exprs);
-    return scheme_eval_k(ret, new_env, conts);
+    if (bindings.length === 0) {
+        return scheme_eval_k(expr, new_env, conts);
+    } else {
+        var first_binding = bindings.getitem(0);
+        var newcont = new LetContinuation(first_binding.getitem(0), bindings.second, new_env, env, expr);
+        return scheme_eval_k(first_binding.getitem(1), env, [newcont].concat(conts));
+    }
 
 }
 
