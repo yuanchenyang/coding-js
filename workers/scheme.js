@@ -381,6 +381,8 @@ function scheme_eval_k(expr, env, conts) {
         return do_set_care_form(rest, env, conts);
     } else if (first === 'set-cdr!') {
         return do_set_cdre_form(rest, env, conts);
+    } else if (first === 'quote') {
+        return do_quote_form(rest, env, conts);
     // ok
     } else if (first === 'define') {
         env.stack.pop();
@@ -389,9 +391,6 @@ function scheme_eval_k(expr, env, conts) {
         expr = do_cond_form(rest, env);
         env.stack.pop();
         return scheme_eval_k(expr, env, conts);
-    } else if (first === 'quote') {
-        env.stack.pop();
-        return apply_cont(conts, do_quote_form(rest));
     } else if (first === 'let') {
         var l = do_let_form(rest, env);
         expr = l[0];
@@ -533,10 +532,12 @@ function do_define_form(vals, env, conts) {
     }
 }
 
-function do_quote_form(vals) {
+function do_quote_form(vals, env, conts) {
     // Evaluate a quote form with parameters VALS
     check_form(vals, 1, 1);
-    return vals.getitem(0);
+    env.stack.pop();
+    return apply_cont(conts, vals.getitem(0));
+
 }
 
 function do_let_form(vals, env) {
