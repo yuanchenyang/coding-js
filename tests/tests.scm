@@ -850,11 +850,11 @@ one-through-four
 ; expect true
 
 ; Tail call optimization test
-; (define (sum n total)
-;  (if (zero? n) total
-;    (sum (- n 1) (+ n total))))
-; (sum 1001 0)
-;;expect 501501
+(define (sum n total)
+ (if (zero? n) total
+   (sum (- n 1) (+ n total))))
+(sum 1001 0)
+; expect 501501
 
 ; display test
 (define (add n result)
