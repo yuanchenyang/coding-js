@@ -272,9 +272,17 @@ LambdaProcedure.prototype = {
 // Eval-Apply Loop //
 /////////////////////
 
-function _apply_cont(conts, val) {
+var _APPLY_CONT_CONTS;
+var _APPLY_CONT_VAL;
 
-    // console.log("apply", conts, val.toString());
+function _apply_cont() {
+
+    if (arguments.length > 0) {
+        throw "do not pass parameters to _apply_cont!"
+    }
+
+    var conts = _APPLY_CONT_CONTS;
+    var val = _APPLY_CONT_VAL;
 
     if (conts.length === 0) {
         return val;
@@ -293,10 +301,21 @@ function _apply_cont(conts, val) {
 
         if (cont.pos == -1 && cont.args.length > 0) {
             cont.pos++;
-            return function () { return _scheme_eval_k(cont.args.getitem(cont.pos), cont.env, conts) };
+            return function () {
+
+                _SCHEME_EVAL_K_EXPR = cont.args.getitem(cont.pos);
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = conts;
+                return _scheme_eval_k();
+            };
         } else if (cont.pos < cont.args.length - 1) {
             cont.pos++;
-            return function () { return _scheme_eval_k(cont.args.getitem(cont.pos), cont.env, conts) };
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.args.getitem(cont.pos);
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = conts;
+                return _scheme_eval_k();
+            };
         } else {
 
             var args = cont.args;
@@ -308,11 +327,19 @@ function _apply_cont(conts, val) {
                 expr = procedure.body;
                 env.stack.pop();
 
-                return function () { return _scheme_eval_k(procedure.body, env, conts.slice(1)) };
+                return function () {
+                    _SCHEME_EVAL_K_EXPR = procedure.body;
+                    _SCHEME_EVAL_K_ENV = env;
+                    _SCHEME_EVAL_K_CONTS = conts.slice(1);
+                    return _scheme_eval_k();
+                };
 
             } else if (procedure instanceof PrimitiveProcedure) {
                 cont.env.stack.pop();
-                return _apply_cont(conts.slice(1), apply_primitive(procedure, args, cont.env));
+
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = apply_primitive(procedure, args, cont.env);
+                return _apply_cont();
             } else {
                 throw "SchemeError: Cannot call " + procedure.toString();
             }
@@ -323,27 +350,63 @@ function _apply_cont(conts, val) {
         cont.env.stack.pop();
 
         if (scheme_true(pred)) {
-            return function () { return _scheme_eval_k(cont.consq, cont.env, conts.slice(1)) };
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.consq;
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = conts.slice(1);
+                return _scheme_eval_k();
+            };
         } else {
-            return function () { return _scheme_eval_k(cont.altnt, cont.env, conts.slice(1)) };
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.altnt;
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = conts.slice(1);
+                return _scheme_eval_k();
+            };
         }
     } else if (cont instanceof AndContinuation) {
         if (scheme_false(val)) {
-            return function () { return _apply_cont(conts.slice(1), false) };
+            return function () {
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = false;
+                return _apply_cont();
+            };
         } else if (cont.args.length === 0) {
-            return function () { return _apply_cont(conts.slice(1), val) };
+            return function () {
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = val;
+                return _apply_cont();
+            };
         } else {
-            var newcont = new AndContinuation(cont.args.second, cont.env);
-            return function () { return _scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1)))};
+            var new_cont = new AndContinuation(cont.args.second, cont.env);
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.args.first;
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts.slice(1));
+                return _scheme_eval_k();
+            };
         }
     } else if (cont instanceof OrContinuation) {
         if (!scheme_false(val)) {
-            return function () { return _apply_cont(conts.slice(1), val) };
+            return function () {
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = val;
+                return _apply_cont();
+            };
         } else if (cont.args.length === 0) {
-            return function () { return _apply_cont(conts.slice(1), false) };
+            return function () {
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = false;
+                return _apply_cont();
+            };
         } else {
-            var newcont = new OrContinuation(cont.args.second, cont.env);
-            return function () { return _scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1))) };
+            var new_cont = new OrContinuation(cont.args.second, cont.env);
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.args.first;
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts.slice(1));
+                return _scheme_eval_k();
+            };
         }
     } else if (cont instanceof SetContinuation) {
 
@@ -356,52 +419,105 @@ function _apply_cont(conts, val) {
         }
 
         cont.env.stack.pop();
-        return function () { return _apply_cont(conts.slice(1), undefined) };
+        return function () {
+            _APPLY_CONT_CONTS = conts.slice(1);
+            _APPLY_CONT_VAL = undefined;
+            return _apply_cont();
+        };
 
     } else if (cont instanceof SetCarContinuation) {
 
         if (cont.target) {
             cont.target.first = val;
-            return function () { return _apply_cont(conts.slice(1), undefined) };
+            return function () {
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = undefined;
+                return _apply_cont();
+            };
         } else {
             cont.target = val;
-            return function () { return _scheme_eval_k(cont.rval, cont.env, conts) };
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.rval;
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = conts;
+                return _scheme_eval_k(cont.rval, cont.env, conts);
+            };
         }
     } else if (cont instanceof SetCdrContinuation) {
 
         if (cont.target) {
             cont.target.second = val;
-            return function () { return _apply_cont(conts.slice(1), undefined) };
+            return function () {
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = undefined;
+                return _apply_cont();
+            };
         } else {
             cont.target = val;
-            return function () { return _scheme_eval_k(cont.rval, cont.env, conts) };
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.rval;
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = conts;
+                return _scheme_eval_k();
+            };
         }
     } else if (cont instanceof BeginContinuation) {
         if (cont.exprs.length === 0) {
-            return function () { return _apply_cont(conts.slice(1), val) };
+            return function () {
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = val;
+                return _apply_cont();
+            };
         } else {
-            var newcont = new BeginContinuation(cont.exprs.second, cont.env);
-            return function () { return _scheme_eval_k(cont.exprs.first, cont.env, [newcont].concat(conts.slice(1))) };
+            var new_cont = new BeginContinuation(cont.exprs.second, cont.env);
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.exprs.first;
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts.slice(1));
+                return _scheme_eval_k();
+            };
         }
     } else if (cont instanceof DefineContinuation) {
 
         cont.env.define(cont.target, val);
-        return function () { return _apply_cont(conts.slice(1), undefined) };
+        return function () {
+            _APPLY_CONT_CONTS = conts.slice(1);
+            _APPLY_CONT_VAL = undefined;
+            return _apply_cont();
+        };
 
     } else if (cont instanceof CondContinuation) {
 
         if (scheme_true(val)) {
             if (cont.consq.length === 0) {
-                return function () { return _apply_cont(conts.slice(1), val) };
+                return function () {
+                    _APPLY_CONT_CONTS = conts.slice(1);
+                    _APPLY_CONT_VAL = val;
+                    return _apply_cont();
+                };
             } else {
                 var ret = new Pair('begin', cont.consq)
-                return function () { return _scheme_eval_k(ret, cont.env, conts.slice(1)) };
+                return function () {
+                    _SCHEME_EVAL_K_EXPR = ret;
+                    _SCHEME_EVAL_K_ENV = cont.env;
+                    _SCHEME_EVAL_K_CONTS = conts.slice(1);
+                    return _scheme_eval_k();
+                };
             }
         } else if (cont.clauses.length === 0) {
-            return function () { return _apply_cont(conts.slice(1), undefined) };
+            return function () {
+                _APPLY_CONT_CONTS = conts.slice(1);
+                _APPLY_CONT_VAL = undefined;
+                return _apply_cont();
+            };
         } else {
-            var newcont = new CondContinuation(cont.clauses.getitem(0).second, cont.clauses.second, cont.env);
-            return function () { return _scheme_eval_k(cont.clauses.getitem(0).first, cont.env, [newcont].concat(conts.slice(1))) };
+            var new_cont = new CondContinuation(cont.clauses.getitem(0).second, cont.clauses.second, cont.env);
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.clauses.getitem(0).first;
+                _SCHEME_EVAL_K_ENV = cont.env;
+                _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts.slice(1));
+                return _scheme_eval_k();
+            };
         }
 
     } else if (cont instanceof LetContinuation) {
@@ -409,11 +525,22 @@ function _apply_cont(conts, val) {
         cont.new_env.define(cont.target, val);
 
         if (cont.bindings.length === 0) {
-            return function () { return _scheme_eval_k(cont.expr, cont.new_env, conts.slice(1)) };
+            return function () {
+                _SCHEME_EVAL_K_EXPR = cont.expr;
+                _SCHEME_EVAL_K_ENV = cont.new_env;
+                _SCHEME_EVAL_K_CONTS = conts.slice(1);
+                return _scheme_eval_k();
+            };
         } else {
             var first_binding = cont.bindings.getitem(0);
-            var newcont = new LetContinuation(first_binding.getitem(0), cont.bindings.second, cont.new_env, env, cont.expr);
-            return function () { return _scheme_eval_k(first_binding.getitem(1), cont.env, [newcont].concat(conts.slice(1))) };
+            var new_cont = new LetContinuation(first_binding.getitem(0), cont.bindings.second, cont.new_env, env, cont.expr);
+
+            _SCHEME_EVAL_K_EXPR = first_binding.getitem(1);
+            _SCHEME_EVAL_K_ENV = cont.env;
+            _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts.slice(1));
+            return function () {
+                return _scheme_eval_k();
+            };
         }
 
     }
@@ -422,14 +549,27 @@ function _apply_cont(conts, val) {
 
 
 function scheme_eval(expr, env) {
-    return scheme_eval_k(expr, env, []);
+    _SCHEME_EVAL_K_EXPR = expr;
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [];
+    return scheme_eval_k();
 }
+
+var _SCHEME_EVAL_K_EXPR;
+var _SCHEME_EVAL_K_ENV;
+var _SCHEME_EVAL_K_CONTS;
 
 function _scheme_eval_k(expr, env, conts) {
     // Evaluate Scheme expression EXPR in environment ENV
     // After that, apply the continuation CONTS
 
-    // console.log("eval", expr.toString(), conts);
+    if (arguments.length > 0) {
+        throw "do not put arguments into _scheme_eval_k!";
+    }
+
+    var expr = _SCHEME_EVAL_K_EXPR;
+    var env = _SCHEME_EVAL_K_ENV;
+    var conts = _SCHEME_EVAL_K_CONTS;
 
     env.stack.push(expr);
     var result;
@@ -440,10 +580,18 @@ function _scheme_eval_k(expr, env, conts) {
     // Evaluate Atoms
     if (scheme_symbolp(expr)) {
         env.stack.pop();
-        return function () { return _apply_cont(conts, env.lookup(expr)) };
+        return function () {
+            _APPLY_CONT_CONTS = conts;
+            _APPLY_CONT_VAL = env.lookup(expr);
+            return _apply_cont();
+        };
     } else if (scheme_atomp(expr)) {
         env.stack.pop();
-        return function () { return _apply_cont(conts, expr) };
+        return function () {
+            _APPLY_CONT_CONTS = conts;
+            _APPLY_CONT_VAL = expr;
+            return _apply_cont();
+        };
     }
     if (! scheme_listp(expr)) {
         throw "SchemeError: malformed list: " + expr.toString();
@@ -462,7 +610,11 @@ function _scheme_eval_k(expr, env, conts) {
     } else if (first === 'lambda') {
         env.stack.pop();
         res = make_lambda(rest, env);
-        return function () { return _apply_cont(conts, res) };
+        return function () {
+            _APPLY_CONT_CONTS = conts;
+            _APPLY_CONT_VAL = res;
+            return _apply_cont();
+        };
     } else if (first === 'set!') {
         return function () { return do_sete_form(rest, env, conts) };
     } else if (first === 'set-car!') {
@@ -480,7 +632,12 @@ function _scheme_eval_k(expr, env, conts) {
         return function () {return do_let_form(rest, env, conts) };
     } else {
         var new_cont = new AppContinuation(rest.copy(), -1, env);
-        return function () { return _scheme_eval_k(first, env, [new_cont].concat(conts)) };
+        return function () {
+            _SCHEME_EVAL_K_EXPR = first;
+            _SCHEME_EVAL_K_ENV = env;
+            _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+            return _scheme_eval_k();
+        };
     }
 }
 
@@ -565,8 +722,12 @@ function do_sete_form(vals, env, conts) {
     check_form(vals, 2, 2);
     target = vals.getitem(0);
 
-    var newcont = new SetContinuation(target, env);
-    return _scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
+    var new_cont = new SetContinuation(target, env);
+
+    _SCHEME_EVAL_K_EXPR = vals.getitem(1);
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+    return _scheme_eval_k();
 }
 
 function do_set_care_form(vals, env, conts) {
@@ -576,8 +737,12 @@ function do_set_care_form(vals, env, conts) {
 
     target = vals.getitem(0);
 
-    var newcont = new SetCarContinuation(vals.getitem(1), env);
-    return _scheme_eval_k(target, env, [newcont].concat(conts));
+    var new_cont = new SetCarContinuation(vals.getitem(1), env);
+
+    _SCHEME_EVAL_K_EXPR = target;
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+    return _scheme_eval_k();
 }
 
 function do_set_cdre_form(vals, env, conts) {
@@ -587,8 +752,12 @@ function do_set_cdre_form(vals, env, conts) {
 
     target = vals.getitem(0);
 
-    var newcont = new SetCdrContinuation(vals.getitem(1), env);
-    return _scheme_eval_k(target, env, [newcont].concat(conts));
+    var new_cont = new SetCdrContinuation(vals.getitem(1), env);
+
+    _SCHEME_EVAL_K_EXPR = target;
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+    return _scheme_eval_k();
 }
 
 function do_define_form(vals, env, conts) {
@@ -598,8 +767,13 @@ function do_define_form(vals, env, conts) {
     target = vals.getitem(0);
     if (scheme_symbolp(target)) {
         check_form(vals, 2, 2);
-        var newcont = new DefineContinuation(target, env);
-        return _scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
+        var new_cont = new DefineContinuation(target, env);
+
+        _SCHEME_EVAL_K_EXPR = vals.getitem(1);
+        _SCHEME_EVAL_K_ENV = env;
+        _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+        return _scheme_eval_k();
+
     } else if (target instanceof Pair) {
         t = target.getitem(0);
         if (! scheme_symbolp(t)) {
@@ -608,7 +782,10 @@ function do_define_form(vals, env, conts) {
         v = new Pair(vals.first.second, vals.second);
         value = make_lambda(v, env);
         env.define(t, value);
-        return _apply_cont(conts, undefined);
+
+        _APPLY_CONT_CONTS = conts;
+        _APPLY_CONT_VAL = undefined;
+        return _apply_cont();
     } else {
         throw "SchemeError: bad argument to define";
     }
@@ -618,7 +795,10 @@ function do_quote_form(vals, env, conts) {
     // Evaluate a quote form with parameters VALS
     check_form(vals, 1, 1);
     env.stack.pop();
-    return _apply_cont(conts, vals.getitem(0));
+
+    _APPLY_CONT_CONTS = conts;
+    _APPLY_CONT_VAL = vals.getitem(0);
+    return _apply_cont();
 
 }
 
@@ -645,11 +825,18 @@ function do_let_form(vals, env, conts) {
     var new_env = env.make_call_frame(nil, nil);
 
     if (bindings.length === 0) {
-        return _scheme_eval_k(expr, new_env, conts);
+        _SCHEME_EVAL_K_EXPR = expr;
+        _SCHEME_EVAL_K_ENV = new_env;
+        _SCHEME_EVAL_K_CONTS = conts;
+        return _scheme_eval_k();
     } else {
         var first_binding = bindings.getitem(0);
-        var newcont = new LetContinuation(first_binding.getitem(0), bindings.second, new_env, env, expr);
-        return _scheme_eval_k(first_binding.getitem(1), env, [newcont].concat(conts));
+        var new_cont = new LetContinuation(first_binding.getitem(0), bindings.second, new_env, env, expr);
+
+        _SCHEME_EVAL_K_EXPR = first_binding.getitem(1);
+        _SCHEME_EVAL_K_ENV = env;
+        _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+        return _scheme_eval_k();
     }
 
 }
@@ -662,20 +849,32 @@ function do_if_form(vals, env, conts) {
     // Evaluate if form with parameters VALS in environment ENV
     check_form(vals, 3, 3);
 
-    var newcont = new IfContinuation(vals.getitem(1), vals.getitem(2), env);
-    return _scheme_eval_k(vals.getitem(0), env, [newcont].concat(conts));
+    var new_cont = new IfContinuation(vals.getitem(1), vals.getitem(2), env);
+
+    _SCHEME_EVAL_K_EXPR = vals.getitem(0);
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+    return _scheme_eval_k();
 }
 
 function do_and_form(vals, env, conts) {
     // Evaluate short-circuited and with parameters VALS in environment ENV
-    var newcont = new AndContinuation(vals.copy(), env);
-    return _scheme_eval_k(true, env, [newcont].concat(conts));
+    var new_cont = new AndContinuation(vals.copy(), env);
+
+    _SCHEME_EVAL_K_EXPR = true;
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+    return _scheme_eval_k();
 }
 
 function do_or_form(vals, env, conts) {
     // Evaluate short-circuited or with parameters VALS in environment ENV
-    var newcont = new OrContinuation(vals.copy(), env);
-    return _scheme_eval_k(false, env, [newcont].concat(conts));
+    var new_cont = new OrContinuation(vals.copy(), env);
+
+    _SCHEME_EVAL_K_EXPR = false;
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+    return _scheme_eval_k();
 }
 
 function do_cond_form(vals, env, conts) {
@@ -698,8 +897,12 @@ function do_cond_form(vals, env, conts) {
     }
 
 
-    var newcont = new CondContinuation(nil, vals, env);
-    return _scheme_eval_k(false, env, [newcont].concat(conts));
+    var new_cont = new CondContinuation(nil, vals, env);
+
+    _SCHEME_EVAL_K_EXPR = false;
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+    return _scheme_eval_k();
 
 }
 
@@ -707,8 +910,12 @@ function do_begin_form(vals, env, conts) {
     // Evaluate begin form with parameters VALS in environment ENV
     check_form(vals, 1);
 
-    var newcont = new BeginContinuation(vals.second.copy(), env);
-    return _scheme_eval_k(vals.first, env, [newcont].concat(conts));
+    var new_cont = new BeginContinuation(vals.second.copy(), env);
+
+    _SCHEME_EVAL_K_EXPR = vals.first;
+    _SCHEME_EVAL_K_ENV = env;
+    _SCHEME_EVAL_K_CONTS = [new_cont].concat(conts);
+    return _scheme_eval_k();
 }
 
 //////////////////////
