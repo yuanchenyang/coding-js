@@ -136,24 +136,28 @@ Frame.prototype = {
 };
 
 function SetContinuation(target, env) {
-    // continuation of setting target to result
+    // (set! target val)
 
     this.target = target;
     this.env = env;
 }
 
 function SetCarContinuation(rval, env) {
+    // (set-car! target val)
+
     this.rval = rval;
     this.env = env;
 }
 
 function SetCdrContinuation(rval, env) {
+    // (set-cdr! target val)
+
     this.rval = rval;
     this.env = env;
 }
 
 function BeginContinuation(exprs, env) {
-    // continuation of (begin val ,@exprs)
+    // (begin val ,@exprs)
 
     this.exprs = exprs;
     this.env = env;
@@ -168,8 +172,7 @@ function DefineContinuation(target, env) {
 }
 
 function IfContinuation(consq, altnt, env) {
-    // continuation of checking the result
-    // and returning either CONSQ or ALTNT
+    // (if val consq altnt)
 
     this.consq = consq;
     this.altnt = altnt;
@@ -177,22 +180,23 @@ function IfContinuation(consq, altnt, env) {
 }
 
 function AndContinuation(args, env) {
-    // continuation of (and val ,@args)
+    // (and val ,@args)
 
     this.args = args;
     this.env = env;
 }
 
 function OrContinuation(args, env) {
-    // continuation of (or val ,@args)
+    // (or val ,@args)
 
     this.args = args;
     this.env = env;
 }
 
 function AppContinuation(args, pos, env) {
-    // continuation of applying the result
-    // to args where pos arguments have already been evaluated
+    // (val ,@args)
+    // if this.f is defined:
+    // (f args[0] args[1] ... args[pos-1] val args[pos+1] ...)
 
     this.args = args;
     this.pos = pos;
