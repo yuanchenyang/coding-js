@@ -152,6 +152,13 @@ function SetCdrContinuation(rval, env) {
     this.env = env;
 }
 
+function BeginContinuation(exprs, env) {
+    // continuation of (begin val ,@exprs)
+
+    this.exprs = exprs;
+    this.env = env;
+}
+
 function IfContinuation(consq, altnt, env) {
     // continuation of checking the result
     // and returning either CONSQ or ALTNT
@@ -314,6 +321,13 @@ function apply_cont(conts, val) {
             cont.target = val;
             return scheme_eval_k(cont.rval, cont.env, conts);
         }
+    } else if (cont instanceof BeginContinuation) {
+        if (cont.exprs.length === 0) {
+            return apply_cont(conts.slice(1), val);
+        } else {
+            var newcont = new BeginContinuation(cont.exprs.second, cont.env);
+            return scheme_eval_k(cont.exprs.first, cont.env, [newcont].concat(conts.slice(1)));
+        }
     }
 
     // return val;
@@ -349,7 +363,6 @@ function scheme_eval_k(expr, env, conts) {
     var first = expr.first;
     var rest = expr.second;
 
-
     if (first === 'if') {
         return do_if_form(rest, env, conts);
     } else if (first === 'and') {
@@ -357,12 +370,10 @@ function scheme_eval_k(expr, env, conts) {
     } else if (first === 'or') {
         return do_or_form(rest, env, conts);
     // ok
+    } else if (first === 'begin') {
+        return do_begin_form(rest, env, conts);
     } else if (first === 'cond') {
         expr = do_cond_form(rest, env);
-        env.stack.pop();
-        return scheme_eval_k(expr, env, conts);
-    } else if (first === 'begin') {
-        expr = do_begin_form(rest, env);
         env.stack.pop();
         return scheme_eval_k(expr, env, conts);
     } else if (first === 'lambda') {
@@ -377,7 +388,7 @@ function scheme_eval_k(expr, env, conts) {
         return do_set_cdre_form(rest, env, conts);
     } else if (first === 'define') {
         env.stack.pop();
-        return do_define_form(rest, env);
+        return do_define_form(rest, env, conts);
     } else if (first === 'quote') {
         env.stack.pop();
         return apply_cont(conts, do_quote_form(rest));
@@ -499,7 +510,7 @@ function do_set_cdre_form(vals, env, conts) {
     return scheme_eval_k(target, env, [newcont].concat(conts));
 }
 
-function do_define_form(vals, env) {
+function do_define_form(vals, env, conts) {
     // Evaluate a define form with parameters VALS in environment ENV
     var target, value, t, v;
     check_form(vals, 2);
@@ -508,6 +519,7 @@ function do_define_form(vals, env) {
         check_form(vals, 2, 2);
         value = scheme_eval(vals.getitem(1), env);
         env.define(target, value);
+        return apply_cont(conts, undefined);
     } else if (target instanceof Pair) {
         t = target.getitem(0);
         if (! scheme_symbolp(t)) {
@@ -516,6 +528,7 @@ function do_define_form(vals, env) {
         v = new Pair(vals.first.second, vals.second);
         value = do_lambda_form(v, env);
         env.define(t, value);
+        return apply_cont(conts, undefined);
     } else {
         throw "SchemeError: bad argument to define";
     }
@@ -605,14 +618,13 @@ function do_cond_form(vals, env) {
     }
     return null;
 }
-function do_begin_form(vals, env) {
+
+function do_begin_form(vals, env, conts) {
     // Evaluate begin form with parameters VALS in environment ENV
     check_form(vals, 1);
-    var eval_length = vals.length - 1;
-    for (var l = 0; l < eval_length; l++) {
-        scheme_eval(vals.getitem(l), env);
-    }
-    return vals.getitem(eval_length);
+
+    var newcont = new BeginContinuation(vals.second.copy(), env);
+    return scheme_eval_k(vals.first, env, [newcont].concat(conts));
 }
 
 //////////////////////
