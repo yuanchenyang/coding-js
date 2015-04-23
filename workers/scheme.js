@@ -12,6 +12,29 @@
 
 importScripts("reader.js", "tokenizer.js", "primitives.js");
 
+function isFunction(functionToCheck) {
+    var getType = {};
+    return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
+
+var variadic = function(fn) {
+    return function() {
+        return fn(Array.prototype.slice.call(arguments));
+    }
+}
+
+var trampoline = function (fn) {
+    return variadic(function(args) {
+        var result = fn.apply(this, args);
+
+        while (result instanceof Function) {
+            result = result();
+        }
+
+        return result;
+    });
+};
+
 onmessage = function(event) {
     var env = create_global_frame();
 
@@ -249,7 +272,7 @@ LambdaProcedure.prototype = {
 // Eval-Apply Loop //
 /////////////////////
 
-function apply_cont(conts, val) {
+function _apply_cont(conts, val) {
 
     // console.log("apply", conts, val.toString());
 
@@ -270,10 +293,10 @@ function apply_cont(conts, val) {
 
         if (cont.pos == -1 && cont.args.length > 0) {
             cont.pos++;
-            return scheme_eval_k(cont.args.getitem(cont.pos), cont.env, conts);
+            return function () { return _scheme_eval_k(cont.args.getitem(cont.pos), cont.env, conts) };
         } else if (cont.pos < cont.args.length - 1) {
             cont.pos++;
-            return scheme_eval_k(cont.args.getitem(cont.pos), cont.env, conts);
+            return function () { return _scheme_eval_k(cont.args.getitem(cont.pos), cont.env, conts) };
         } else {
 
             var args = cont.args;
@@ -285,12 +308,11 @@ function apply_cont(conts, val) {
                 expr = procedure.body;
                 env.stack.pop();
 
-                return scheme_eval_k(procedure.body, env, conts.slice(1));
+                return function () { return _scheme_eval_k(procedure.body, env, conts.slice(1)) };
 
             } else if (procedure instanceof PrimitiveProcedure) {
                 cont.env.stack.pop();
-                return apply_cont(conts.slice(1),
-                    apply_primitive(procedure, args, cont.env));
+                return _apply_cont(conts.slice(1), apply_primitive(procedure, args, cont.env));
             } else {
                 throw "SchemeError: Cannot call " + procedure.toString();
             }
@@ -301,27 +323,27 @@ function apply_cont(conts, val) {
         cont.env.stack.pop();
 
         if (scheme_true(pred)) {
-            return scheme_eval_k(cont.consq, cont.env, conts.slice(1));
+            return function () { return _scheme_eval_k(cont.consq, cont.env, conts.slice(1)) };
         } else {
-            return scheme_eval_k(cont.altnt, cont.env, conts.slice(1));
+            return function () { return _scheme_eval_k(cont.altnt, cont.env, conts.slice(1)) };
         }
     } else if (cont instanceof AndContinuation) {
         if (scheme_false(val)) {
-            return apply_cont(conts.slice(1), false);
+            return function () { return _apply_cont(conts.slice(1), false) };
         } else if (cont.args.length === 0) {
-            return apply_cont(conts.slice(1), val);
+            return function () { return _apply_cont(conts.slice(1), val) };
         } else {
             var newcont = new AndContinuation(cont.args.second, cont.env);
-            return scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1)));
+            return function () { return _scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1)))};
         }
     } else if (cont instanceof OrContinuation) {
         if (!scheme_false(val)) {
-            return apply_cont(conts.slice(1), val);
+            return function () { return _apply_cont(conts.slice(1), val) };
         } else if (cont.args.length === 0) {
-            return apply_cont(conts.slice(1), false);
+            return function () { return _apply_cont(conts.slice(1), false) };
         } else {
             var newcont = new OrContinuation(cont.args.second, cont.env);
-            return scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1)));
+            return function () { return _scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1))) };
         }
     } else if (cont instanceof SetContinuation) {
 
@@ -334,52 +356,52 @@ function apply_cont(conts, val) {
         }
 
         cont.env.stack.pop();
-        return apply_cont(conts.slice(1), undefined);
+        return function () { return _apply_cont(conts.slice(1), undefined) };
 
     } else if (cont instanceof SetCarContinuation) {
 
         if (cont.target) {
             cont.target.first = val;
-            return apply_cont(conts.slice(1), undefined);
+            return function () { return _apply_cont(conts.slice(1), undefined) };
         } else {
             cont.target = val;
-            return scheme_eval_k(cont.rval, cont.env, conts);
+            return function () { return _scheme_eval_k(cont.rval, cont.env, conts) };
         }
     } else if (cont instanceof SetCdrContinuation) {
 
         if (cont.target) {
             cont.target.second = val;
-            return apply_cont(conts.slice(1), undefined);
+            return function () { return _apply_cont(conts.slice(1), undefined) };
         } else {
             cont.target = val;
-            return scheme_eval_k(cont.rval, cont.env, conts);
+            return function () { return _scheme_eval_k(cont.rval, cont.env, conts) };
         }
     } else if (cont instanceof BeginContinuation) {
         if (cont.exprs.length === 0) {
-            return apply_cont(conts.slice(1), val);
+            return function () { return _apply_cont(conts.slice(1), val) };
         } else {
             var newcont = new BeginContinuation(cont.exprs.second, cont.env);
-            return scheme_eval_k(cont.exprs.first, cont.env, [newcont].concat(conts.slice(1)));
+            return function () { return _scheme_eval_k(cont.exprs.first, cont.env, [newcont].concat(conts.slice(1))) };
         }
     } else if (cont instanceof DefineContinuation) {
 
         cont.env.define(cont.target, val);
-        return apply_cont(conts.slice(1), undefined);
+        return function () { return _apply_cont(conts.slice(1), undefined) };
 
     } else if (cont instanceof CondContinuation) {
 
         if (scheme_true(val)) {
             if (cont.consq.length === 0) {
-                return apply_cont(conts.slice(1), val);
+                return function () { return _apply_cont(conts.slice(1), val) };
             } else {
                 var ret = new Pair('begin', cont.consq)
-                return scheme_eval_k(ret, cont.env, conts.slice(1));
+                return function () { return _scheme_eval_k(ret, cont.env, conts.slice(1)) };
             }
         } else if (cont.clauses.length === 0) {
-            return apply_cont(conts.slice(1), undefined);
+            return function () { return _apply_cont(conts.slice(1), undefined) };
         } else {
             var newcont = new CondContinuation(cont.clauses.getitem(0).second, cont.clauses.second, cont.env);
-            return scheme_eval_k(cont.clauses.getitem(0).first, cont.env, [newcont].concat(conts.slice(1)));
+            return function () { return _scheme_eval_k(cont.clauses.getitem(0).first, cont.env, [newcont].concat(conts.slice(1))) };
         }
 
     } else if (cont instanceof LetContinuation) {
@@ -387,23 +409,23 @@ function apply_cont(conts, val) {
         cont.new_env.define(cont.target, val);
 
         if (cont.bindings.length === 0) {
-            return scheme_eval_k(cont.expr, cont.new_env, conts.slice(1));
+            return function () { return _scheme_eval_k(cont.expr, cont.new_env, conts.slice(1)) };
         } else {
             var first_binding = cont.bindings.getitem(0);
             var newcont = new LetContinuation(first_binding.getitem(0), cont.bindings.second, cont.new_env, env, cont.expr);
-            return scheme_eval_k(first_binding.getitem(1), cont.env, [newcont].concat(conts.slice(1)));
+            return function () { return _scheme_eval_k(first_binding.getitem(1), cont.env, [newcont].concat(conts.slice(1))) };
         }
 
     }
 
-    // return val;
 }
+
 
 function scheme_eval(expr, env) {
     return scheme_eval_k(expr, env, []);
 }
 
-function scheme_eval_k(expr, env, conts) {
+function _scheme_eval_k(expr, env, conts) {
     // Evaluate Scheme expression EXPR in environment ENV
     // After that, apply the continuation CONTS
 
@@ -418,10 +440,10 @@ function scheme_eval_k(expr, env, conts) {
     // Evaluate Atoms
     if (scheme_symbolp(expr)) {
         env.stack.pop();
-        return apply_cont(conts, env.lookup(expr));
+        return function () { return _apply_cont(conts, env.lookup(expr)) };
     } else if (scheme_atomp(expr)) {
         env.stack.pop();
-        return apply_cont(conts, expr);
+        return function () { return _apply_cont(conts, expr) };
     }
     if (! scheme_listp(expr)) {
         throw "SchemeError: malformed list: " + expr.toString();
@@ -430,38 +452,40 @@ function scheme_eval_k(expr, env, conts) {
     var rest = expr.second;
 
     if (first === 'if') {
-        return do_if_form(rest, env, conts);
+        return function() { return do_if_form(rest, env, conts) };
     } else if (first === 'and') {
-        return do_and_form(rest, env, conts);
+        return function() { return do_and_form(rest, env, conts) };
     } else if (first === 'or') {
-        return do_or_form(rest, env, conts);
+        return function() { return do_or_form(rest, env, conts) };
     } else if (first === 'begin') {
-        return do_begin_form(rest, env, conts);
+        return function() { return do_begin_form(rest, env, conts) };
     } else if (first === 'lambda') {
         env.stack.pop();
         res = make_lambda(rest, env);
-        return apply_cont(conts, res);
+        return function () { return _apply_cont(conts, res) };
     } else if (first === 'set!') {
-        return do_sete_form(rest, env, conts);
+        return function () { return do_sete_form(rest, env, conts) };
     } else if (first === 'set-car!') {
-        return do_set_care_form(rest, env, conts);
+        return function () { return do_set_care_form(rest, env, conts) };
     } else if (first === 'set-cdr!') {
-        return do_set_cdre_form(rest, env, conts);
+        return function () { return do_set_cdre_form(rest, env, conts) };
     } else if (first === 'quote') {
-        return do_quote_form(rest, env, conts);
+        return function () { return do_quote_form(rest, env, conts) };
     } else if (first === 'define') {
         env.stack.pop();
-        return do_define_form(rest, env, conts);
+        return function () {return do_define_form(rest, env, conts) };
     } else if (first === 'cond') {
-        return do_cond_form(rest, env, conts);
+        return function () { return do_cond_form(rest, env, conts) };
     } else if (first === 'let') {
-        return do_let_form(rest, env, conts);
+        return function () {return do_let_form(rest, env, conts) };
     } else {
         var new_cont = new AppContinuation(rest.copy(), -1, env);
-        return scheme_eval_k(first, env, [new_cont].concat(conts));
+        return function () { return _scheme_eval_k(first, env, [new_cont].concat(conts)) };
     }
-    return result;
 }
+
+var scheme_eval_k = trampoline(_scheme_eval_k);
+var apply_cont = trampoline(_apply_cont);
 
 function scheme_apply(procedure, args, env) {
     // Apply Scheme PROCEDURE to argument values ARGS in environment ENV
@@ -542,7 +566,7 @@ function do_sete_form(vals, env, conts) {
     target = vals.getitem(0);
 
     var newcont = new SetContinuation(target, env);
-    return scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
+    return _scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
 }
 
 function do_set_care_form(vals, env, conts) {
@@ -553,7 +577,7 @@ function do_set_care_form(vals, env, conts) {
     target = vals.getitem(0);
 
     var newcont = new SetCarContinuation(vals.getitem(1), env);
-    return scheme_eval_k(target, env, [newcont].concat(conts));
+    return _scheme_eval_k(target, env, [newcont].concat(conts));
 }
 
 function do_set_cdre_form(vals, env, conts) {
@@ -564,7 +588,7 @@ function do_set_cdre_form(vals, env, conts) {
     target = vals.getitem(0);
 
     var newcont = new SetCdrContinuation(vals.getitem(1), env);
-    return scheme_eval_k(target, env, [newcont].concat(conts));
+    return _scheme_eval_k(target, env, [newcont].concat(conts));
 }
 
 function do_define_form(vals, env, conts) {
@@ -575,7 +599,7 @@ function do_define_form(vals, env, conts) {
     if (scheme_symbolp(target)) {
         check_form(vals, 2, 2);
         var newcont = new DefineContinuation(target, env);
-        return scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
+        return _scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
     } else if (target instanceof Pair) {
         t = target.getitem(0);
         if (! scheme_symbolp(t)) {
@@ -584,7 +608,7 @@ function do_define_form(vals, env, conts) {
         v = new Pair(vals.first.second, vals.second);
         value = make_lambda(v, env);
         env.define(t, value);
-        return apply_cont(conts, undefined);
+        return _apply_cont(conts, undefined);
     } else {
         throw "SchemeError: bad argument to define";
     }
@@ -594,7 +618,7 @@ function do_quote_form(vals, env, conts) {
     // Evaluate a quote form with parameters VALS
     check_form(vals, 1, 1);
     env.stack.pop();
-    return apply_cont(conts, vals.getitem(0));
+    return _apply_cont(conts, vals.getitem(0));
 
 }
 
@@ -621,11 +645,11 @@ function do_let_form(vals, env, conts) {
     var new_env = env.make_call_frame(nil, nil);
 
     if (bindings.length === 0) {
-        return scheme_eval_k(expr, new_env, conts);
+        return _scheme_eval_k(expr, new_env, conts);
     } else {
         var first_binding = bindings.getitem(0);
         var newcont = new LetContinuation(first_binding.getitem(0), bindings.second, new_env, env, expr);
-        return scheme_eval_k(first_binding.getitem(1), env, [newcont].concat(conts));
+        return _scheme_eval_k(first_binding.getitem(1), env, [newcont].concat(conts));
     }
 
 }
@@ -639,19 +663,19 @@ function do_if_form(vals, env, conts) {
     check_form(vals, 3, 3);
 
     var newcont = new IfContinuation(vals.getitem(1), vals.getitem(2), env);
-    return scheme_eval_k(vals.getitem(0), env, [newcont].concat(conts));
+    return _scheme_eval_k(vals.getitem(0), env, [newcont].concat(conts));
 }
 
 function do_and_form(vals, env, conts) {
     // Evaluate short-circuited and with parameters VALS in environment ENV
     var newcont = new AndContinuation(vals.copy(), env);
-    return scheme_eval_k(true, env, [newcont].concat(conts));
+    return _scheme_eval_k(true, env, [newcont].concat(conts));
 }
 
 function do_or_form(vals, env, conts) {
     // Evaluate short-circuited or with parameters VALS in environment ENV
     var newcont = new OrContinuation(vals.copy(), env);
-    return scheme_eval_k(false, env, [newcont].concat(conts));
+    return _scheme_eval_k(false, env, [newcont].concat(conts));
 }
 
 function do_cond_form(vals, env, conts) {
@@ -675,7 +699,7 @@ function do_cond_form(vals, env, conts) {
 
 
     var newcont = new CondContinuation(nil, vals, env);
-    return scheme_eval_k(false, env, [newcont].concat(conts));
+    return _scheme_eval_k(false, env, [newcont].concat(conts));
 
 }
 
@@ -684,7 +708,7 @@ function do_begin_form(vals, env, conts) {
     check_form(vals, 1);
 
     var newcont = new BeginContinuation(vals.second.copy(), env);
-    return scheme_eval_k(vals.first, env, [newcont].concat(conts));
+    return _scheme_eval_k(vals.first, env, [newcont].concat(conts));
 }
 
 //////////////////////
