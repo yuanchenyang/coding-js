@@ -168,6 +168,13 @@ function AndContinuation(args, env) {
     this.env = env;
 }
 
+function OrContinuation(args, env) {
+    // continuation of (or val ,@args)
+
+    this.args = args;
+    this.env = env;
+}
+
 function AppContinuation(args, pos, env) {
     // continuation of applying the result
     // to args where pos arguments have already been evaluated
@@ -214,8 +221,6 @@ function apply_cont(conts, val) {
     if (cont instanceof AppContinuation) {
 
         // args is a scheme list
-        // console.log(cont.args.toString());
-        // console.log(val, cont.pos, cont.args.toString());
 
         if (cont.pos !== -1) {
             cont.args.setitem(cont.pos, val);
@@ -270,6 +275,17 @@ function apply_cont(conts, val) {
             var newcont = new AndContinuation(cont.args.second, cont.env);
             return scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1)));
         }
+    } else if (cont instanceof OrContinuation) {
+        if (!scheme_false(val)) {
+            return apply_cont(conts.slice(1), val);
+        } else if (cont.args.length === 0) {
+            cont.env.stack.pop();
+            return apply_cont(conts.slice(1), false);
+        } else {
+            var newcont = new OrContinuation(cont.args.second, cont.env);
+            return scheme_eval_k(cont.args.first, cont.env, [newcont].concat(conts.slice(1)));
+        }
+
     } else if (cont instanceof SetContinuation) {
 
         var target = cont.target;
@@ -336,10 +352,14 @@ function scheme_eval_k(expr, env, conts) {
     var first = expr.first;
     var rest = expr.second;
 
+
     if (first === 'if') {
         return do_if_form(rest, env, conts);
     } else if (first === 'and') {
         return do_and_form(rest, env, conts);
+    // ok
+    } else if (first === 'or') {
+        return do_or_form(rest, env, conts);
     } else if (first in LOGIC_FORMS) {
         expr = LOGIC_FORMS[first](rest, env);
         env.stack.pop();
@@ -550,7 +570,7 @@ function do_if_form(vals, env, conts) {
 
 function do_and_form(vals, env, conts) {
     // Evaluate short-circuited and with parameters VALS in environment ENV
-    if (vals.length == 0) {
+    if (vals.length === 0) {
         return apply_cont(conts, true);
     }
 
@@ -560,12 +580,12 @@ function do_and_form(vals, env, conts) {
 
 function do_or_form(vals, env) {
     // Evaluate short-circuited or with parameters VALS in environment ENV
-    while (vals != nil) {
-        var pred = scheme_eval(vals.first, env);
-        if (scheme_true(pred)) {return vals.first;}
-        vals = vals.second;
+    if (vals.length === 0) {
+        return apply_cont(conts, false);
     }
-    return false;
+
+    var newcont = new OrContinuation(vals.second.copy(), env);
+    return scheme_eval_k(vals.first, env, [newcont].concat(conts));
 }
 
 function do_cond_form(vals, env) {
