@@ -159,6 +159,14 @@ function BeginContinuation(exprs, env) {
     this.env = env;
 }
 
+function DefineContinuation(target, env) {
+    // (define target val)
+
+    this.target = target;
+    this.env = env;
+
+}
+
 function IfContinuation(consq, altnt, env) {
     // continuation of checking the result
     // and returning either CONSQ or ALTNT
@@ -328,6 +336,11 @@ function apply_cont(conts, val) {
             var newcont = new BeginContinuation(cont.exprs.second, cont.env);
             return scheme_eval_k(cont.exprs.first, cont.env, [newcont].concat(conts.slice(1)));
         }
+    } else if (cont instanceof DefineContinuation) {
+
+        cont.env.define(cont.target, val);
+        return apply_cont(conts.slice(1), undefined);
+
     }
 
     // return val;
@@ -383,10 +396,10 @@ function scheme_eval_k(expr, env, conts) {
         return do_set_cdre_form(rest, env, conts);
     } else if (first === 'quote') {
         return do_quote_form(rest, env, conts);
-    // ok
     } else if (first === 'define') {
         env.stack.pop();
         return do_define_form(rest, env, conts);
+    // ok
     } else if (first === 'cond') {
         expr = do_cond_form(rest, env);
         env.stack.pop();
@@ -515,9 +528,8 @@ function do_define_form(vals, env, conts) {
     target = vals.getitem(0);
     if (scheme_symbolp(target)) {
         check_form(vals, 2, 2);
-        value = scheme_eval(vals.getitem(1), env);
-        env.define(target, value);
-        return apply_cont(conts, undefined);
+        var newcont = new DefineContinuation(target, env);
+        return scheme_eval_k(vals.getitem(1), env, [newcont].concat(conts));
     } else if (target instanceof Pair) {
         t = target.getitem(0);
         if (! scheme_symbolp(t)) {
