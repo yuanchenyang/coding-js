@@ -44,7 +44,11 @@ Pair.prototype = {
             second = second.second;
         }
         if (second !== nil) {
-            s += " . " + second.toString();
+            if (second === undefined) {
+                s += " . " + "undefined";
+            } else {
+                s += " . " + second.toString();
+            }
         }
         return s + ")";
     },

@@ -171,6 +171,14 @@ function DefineContinuation(target, env) {
 
 }
 
+function CondContinuation(consq, clauses, env) {
+    // (cond [(val consq) ,@clauses ])
+
+    this.consq = consq;
+    this.clauses = clauses;
+    this.env = env;
+}
+
 function IfContinuation(consq, altnt, env) {
     // (if val consq altnt)
 
@@ -345,6 +353,21 @@ function apply_cont(conts, val) {
         cont.env.define(cont.target, val);
         return apply_cont(conts.slice(1), undefined);
 
+    } else if (cont instanceof CondContinuation) {
+
+        if (scheme_true(val)) {
+            if (cont.consq.length === 0) {
+                return apply_cont(conts.slice(1), val);
+            } else {
+                var ret = new Pair('begin', cont.consq)
+                return scheme_eval_k(ret, cont.env, conts.slice(1));
+            }
+        } else if (cont.clauses.length === 0) {
+            return apply_cont(conts.slice(1), undefined);
+        } else {
+            var newcont = new CondContinuation(cont.clauses.getitem(0).second, cont.clauses.second, cont.env);
+            return scheme_eval_k(cont.clauses.getitem(0).first, cont.env, [newcont].concat(conts.slice(1)));
+        }
     }
 
     // return val;
@@ -405,9 +428,7 @@ function scheme_eval_k(expr, env, conts) {
         return do_define_form(rest, env, conts);
     // ok
     } else if (first === 'cond') {
-        expr = do_cond_form(rest, env);
-        env.stack.pop();
-        return scheme_eval_k(expr, env, conts);
+        return do_cond_form(rest, env, conts);
     } else if (first === 'let') {
         var l = do_let_form(rest, env);
         expr = l[0];
@@ -610,15 +631,17 @@ function do_or_form(vals, env, conts) {
     return scheme_eval_k(false, env, [newcont].concat(conts));
 }
 
-function do_cond_form(vals, env) {
+function do_cond_form(vals, env, conts) {
     // Evaluate cond form with parameters VALS in environment ENV
 
-    for (var i = 0; i < vals.length; i++) {
-        var clause = vals.getitem(i);
+    var newvals = vals.copy();
+    for (var i = 0; i < newvals.length; i++) {
+        var clause = newvals.getitem(i);
         check_form(clause, 1);
 
         if (clause.first === "else") {
-            if (i < vals.length - 1) {
+            clause.first = true;
+            if (i < newvals.length - 1) {
                 throw "SchemeError: else must be last";
             }
             if (clause.second === nil) {
@@ -627,20 +650,24 @@ function do_cond_form(vals, env) {
         }
     }
 
-    var test;
-    for (var i = 0; i < vals.length; i++) {
-        var clause = vals.getitem(i);
-        if (clause.first === "else") {
-            test = true;
-        } else {
-            test = scheme_eval(clause.first, env);
-        }
-        if (scheme_true(test)) {
-            if (clause.second.length == 0) {return test;}
-            return new Pair('begin', clause.second);
-        }
-    }
-    return null;
+
+    var newcont = new CondContinuation(nil, vals, env);
+    return scheme_eval_k(false, env, [newcont].concat(conts));
+
+    // var test;
+    // for (var i = 0; i < vals.length; i++) {
+    //     var clause = vals.getitem(i);
+    //     if (clause.first === "else") {
+    //         test = true;
+    //     } else {
+    //         test = scheme_eval(clause.first, env);
+    //     }
+    //     if (scheme_true(test)) {
+    //         if (clause.second.length == 0) {return test;}
+    //         return new Pair('begin', clause.second);
+    //     }
+    // }
+    // return null;
 }
 
 function do_begin_form(vals, env, conts) {
