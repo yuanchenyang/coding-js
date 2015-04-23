@@ -368,6 +368,7 @@ function apply_cont(conts, val) {
             var newcont = new CondContinuation(cont.clauses.getitem(0).second, cont.clauses.second, cont.env);
             return scheme_eval_k(cont.clauses.getitem(0).first, cont.env, [newcont].concat(conts.slice(1)));
         }
+
     }
 
     // return val;
@@ -430,11 +431,7 @@ function scheme_eval_k(expr, env, conts) {
         return do_cond_form(rest, env, conts);
     // ok
     } else if (first === 'let') {
-        var l = do_let_form(rest, env);
-        expr = l[0];
-        env = l[1];
-        env.stack.pop();
-        return scheme_eval_k(expr, env, conts);
+        return do_let_form(rest, env, conts);
     } else {
         var new_cont = new AppContinuation(rest.copy(), -1, env);
         return scheme_eval_k(first, env, [new_cont].concat(conts));
@@ -577,7 +574,7 @@ function do_quote_form(vals, env, conts) {
 
 }
 
-function do_let_form(vals, env) {
+function do_let_form(vals, env, conts) {
     // Evaluate a let form with parameters VALS in environment ENV
 
     check_form(vals, 2);
@@ -595,6 +592,7 @@ function do_let_form(vals, env) {
 
     var bindings = vals.getitem(0);
     var exprs = vals.second;
+
     // Add a frame containing bindings
     var new_env = env.make_call_frame(nil, nil);
     for (var i = 0; i < bindings.length; i++) {
@@ -603,12 +601,10 @@ function do_let_form(vals, env) {
         var value = scheme_eval(binding.getitem(1), env);
         new_env.define(name, value);
     }
-    // Evaluate all but the last expression after bindings, and return the last
-    var last = exprs.length - 1;
-    for (i = 0; i < last; i++) {
-        scheme_eval(exprs.getitem(i), new_env);
-    }
-    return [exprs.getitem(last), new_env];
+
+    var ret = new Pair('begin', exprs);
+    return scheme_eval_k(ret, new_env, conts);
+
 }
 
 /////////////////
@@ -658,20 +654,6 @@ function do_cond_form(vals, env, conts) {
     var newcont = new CondContinuation(nil, vals, env);
     return scheme_eval_k(false, env, [newcont].concat(conts));
 
-    // var test;
-    // for (var i = 0; i < vals.length; i++) {
-    //     var clause = vals.getitem(i);
-    //     if (clause.first === "else") {
-    //         test = true;
-    //     } else {
-    //         test = scheme_eval(clause.first, env);
-    //     }
-    //     if (scheme_true(test)) {
-    //         if (clause.second.length == 0) {return test;}
-    //         return new Pair('begin', clause.second);
-    //     }
-    // }
-    // return null;
 }
 
 function do_begin_form(vals, env, conts) {
