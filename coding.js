@@ -12,7 +12,7 @@ String.prototype.format = function () {
 
 var CodingJS = (function CodingJS() {
 
-    return function CodingJSConstructor (interpreter_path, language) {
+    return function CodingJSConstructor (interpreter_path, language, onFocus) {
 
         var coding = this;
 
@@ -27,9 +27,8 @@ var CodingJS = (function CodingJS() {
             coding.config.language = language; //TODO: allow mixed languages within page
         };
 
-        coding.focus_callback = function () {
-            //for clients to override
-        };
+        console.log('setting focus_callback', onFocus);
+        coding.focus_callback = onFocus;
 
         coding.clean_code = function (code) {
             //cleans extra newlines that exist to make in-html code look better
@@ -118,7 +117,7 @@ var CodingJS = (function CodingJS() {
             var editor = CodeMirror($editor[0], {
                 'value': code,
                 'matchBrackets': true,
-                'onFocus': function() {console.log("focus_callback" + _editor); coding.focus_callback(_editor);}
+                'onFocus': function() {coding.focus_callback(_editor);},
             });
 
             editor.setOption('extraKeys', {
@@ -185,17 +184,6 @@ var CodingJS = (function CodingJS() {
 
             dfs(editor_name);
             return ret;
-        };
-
-        coding.focus_callback = function (s) {
-            var ts = "";
-            for (var i = 0, d = coding.get_all_deps(s); i < d.length; i++) {  //TODO list all deps
-                ts += coding.editor_of[d[i]].getValue() + "\n\n";
-            }
-
-            ts += "<b>" + coding.editor_of[s].getValue() + "</b>";
-
-            $("#currently-editing").html("<pre>" + ts + "</pre>");
         };
 
         ////////////////////////////////////////////////////////////////////////////////
