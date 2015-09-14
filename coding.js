@@ -12,7 +12,9 @@ String.prototype.format = function () {
 
 var CodingJS = (function CodingJS() {
 
-    return function CodingJSConstructor (interpreter_path, language, onFocus) {
+    return function CodingJSConstructor (interpreter_path, language, cbs) {
+
+        cbs = cbs || {};
 
         var coding = this;
 
@@ -27,8 +29,7 @@ var CodingJS = (function CodingJS() {
             coding.config.language = language; //TODO: allow mixed languages within page
         };
 
-        console.log('setting focus_callback', onFocus);
-        coding.focus_callback = onFocus;
+        coding.focus_callback = cbs.onFocus || function () {};
 
         coding.clean_code = function (code) {
             //cleans extra newlines that exist to make in-html code look better
