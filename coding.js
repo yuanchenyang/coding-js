@@ -139,6 +139,7 @@ var CodingJS = (function CodingJS() {
             var editor = coding.editor_of[_editor];
 
             editor.setOption('onBlur', function() {
+                if (cbs.onBlur) cbs.onBlur(_editor);
                 coding.$_(_output).empty().append($("<span>" + func(_editor, editor.getValue()) + "</span>"));
             });
         };
@@ -300,6 +301,7 @@ var CodingJS = (function CodingJS() {
                 for (var pushes = coding.get_all_pushes(s), i = 0; i < pushes.length; i++) {
                     coding.compute(pushes[i]);
                 }
+                if (cbs.onBlur) cbs.onBlur(s);
                 return coding.compute(s);
             });
             coding.add_output(s);
@@ -312,6 +314,7 @@ var CodingJS = (function CodingJS() {
             coding.editor_of[s].setOption('onBlur', function() {
                 // todo: I think this is only needed
                 // to run initial code. try to delete it.
+                if (cbs.onBlur) cbs.onBlur(s);
                 return coding.compute(s);
             });
             coding.add_output(s);
@@ -379,6 +382,7 @@ var CodingJS = (function CodingJS() {
                         coding.$_(s + "-input-output").empty().append("<div class='wrong-answer'> \u2717 </div>");
                     }
                 });
+                if (cbs.onBlur) cbs.onBlur(s);
             });
         };
 
@@ -466,6 +470,7 @@ var CodingJS = (function CodingJS() {
 
             (function proc() {
                 if (todo.length == 0) {
+                    if (cbs.onInitialEvalHasCompleted) return cbs.onInitialEvalHasCompleted();
                     return;
                 }
                 try {
