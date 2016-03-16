@@ -1,4 +1,4 @@
-"use strict";
+
 
 String.prototype.format = function () {
     var o = Array.prototype.slice.call(arguments);
@@ -11,6 +11,7 @@ String.prototype.format = function () {
 };
 
 var CodingJS = (function CodingJS() {
+    "use strict";
 
     return function CodingJSConstructor (interpreter_path, language, cbs) {
 
